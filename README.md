@@ -122,7 +122,7 @@ dotnet run
 ```
 
 <!-- TODO: indica el usuario de prueba o cómo se crea el primer administrador (sin datos reales) -->
-**Usuario de prueba (solo desarrollo):** `admin` / `********`
+**Usuario de prueba (solo desarrollo):** `admin` / `Admin123!`
 
 ---
 
