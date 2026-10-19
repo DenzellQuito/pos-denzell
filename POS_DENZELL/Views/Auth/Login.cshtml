@@ -1,0 +1,67 @@
+﻿@model POS_DENZELL.DTOs.LoginDTO
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ingreso - Javier&Jose</title>
+    <!-- Cargamos el CSS de Bootstrap que viene por defecto en el proyecto -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
+</head>
+<body>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4 col-sm-8">
+
+                <div class="card login-card p-4">
+                    <div class="card-body">
+
+                        <div class="text-center mb-4">
+                            <h3 class="fw-bold text-success">Javier & Jose </h3>
+                            <p class="text-muted">Sistema de Punto de Venta</p>
+                        </div>
+
+                        <!-- Mostrar mensajes de error (Si puso mal la clave) -->
+                        @if (ViewBag.Error != null)
+                        {
+                            <div class="alert alert-danger text-center shadow-sm" role="alert">
+                                @ViewBag.Error
+                            </div>
+                        }
+
+                        <form asp-controller="Auth" asp-action="Login" method="post">
+
+                            <div class="mb-3">
+                                <label asp-for="Username" class="form-label">Usuario</label>
+                                <input asp-for="Username" class="form-control form-control-lg" placeholder="Ej: admin" autocomplete="off" />
+                                <span asp-validation-for="Username" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-4">
+                                <label asp-for="Password" class="form-label">Contraseña</label>
+                                <input asp-for="Password" type="password" class="form-control form-control-lg" placeholder="••••••••" />
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-brand btn-lg">Ingresar al Sistema</button>
+                            </div>
+
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

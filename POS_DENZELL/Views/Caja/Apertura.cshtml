@@ -1,0 +1,40 @@
+﻿@{
+    ViewData["Title"] = "Apertura de Caja";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow border-0" style="border-radius: 15px;">
+            <div class="card-header bg-success text-white text-center" style="border-radius: 15px 15px 0 0;">
+                <h4 class="mb-0 py-2 fw-bold"><i class="bi bi-cash-stack"></i> Apertura de Caja</h4>
+            </div>
+            <div class="card-body p-5">
+
+                <p class="text-center text-muted mb-4">
+                    Ingresa el monto de dinero físico (sencillo) con el que cuentas en la gaveta para iniciar el turno de ventas.
+                </p>
+
+                <!-- El formulario que envía el monto al Controlador -->
+                <form asp-controller="Caja" asp-action="Apertura" method="post">
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-secondary">Monto Inicial (S/)</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light">S/</span>
+                            <!-- recepcion del monto inicial con centimos -->
+                            <input type="number" step="0.10" min="0" name="MontoInicial" class="form-control" required placeholder="Ej: 50.00" autocomplete="off" autofocus />
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg fw-bold">
+                            Abrir Turno
+                        </button>
+                        <a href="/Home/Index" class="btn btn-light text-muted">Cancelar</a>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>

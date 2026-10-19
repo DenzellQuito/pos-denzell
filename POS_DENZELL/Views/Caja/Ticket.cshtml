@@ -1,0 +1,137 @@
+﻿@model POS_DENZELL.DTOs.TicketVentaDTO
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Ticket_Venta_@Model.NumeroComprobante</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; font-size: 12px; color: #000; margin: 0; padding: 0; width: 300px; }
+        .ticket-container { padding: 10px; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-left { text-align: left; }
+        .bold { font-weight: bold; }
+        .divider { border-bottom: 1px dashed #000; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 3px 0; }
+            @@media print {
+                body {
+                    width: 100%;
+                }
+
+                @@page {
+                    margin: 0;
+                }
+            }
+    </style>
+</head>
+<body>
+    <div class="ticket-container">
+        
+        <div class="text-center">
+            <h2 style="margin: 0;">GOLOSINAS JAVIER & JOSE</h2>
+            <p style="margin: 5px 0;">Venta al por menor de dulces y abarrotes</p>
+            <p style="margin: 0;">Barranca, Lima - Perú</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="margin-bottom: 10px;">
+            <div><span class="bold">TICKET DE VENTA:</span> @Model.NumeroComprobante</div>
+            <div><span class="bold">FECHA:</span> @Model.FechaHora.ToString("dd/MM/yyyy HH:mm")</div>
+            <div><span class="bold">CAJERO:</span> @Model.NombreCajero</div>
+            
+            <!-- SI EXISTE UN CLIENTE, LO IMPRIMIMOS -->
+            @if (!string.IsNullOrEmpty(Model.ClienteDocumento))
+            {
+                <div style="margin-top: 5px;">
+                    <div><span class="bold">DNI/RUC:</span> @Model.ClienteDocumento</div>
+                    <div><span class="bold">CLIENTE:</span> @Model.ClienteNombre</div>
+                </div>
+            }
+        </div>
+
+        <div class="divider"></div>
+
+        <table>
+            <thead>
+                <tr style="border-bottom: 1px solid #000;">
+                    <th class="text-left" style="width: 15%;">CANT</th>
+                    <th class="text-left" style="width: 55%;">DESCRIPCIÓN</th>
+                    <th class="text-right" style="width: 30%;">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Detalles)
+                {
+                    <tr>
+                        <td class="text-left">@item.Cantidad</td>
+                        <td class="text-left">@item.Descripcion</td>
+                        <td class="text-right">S/ @item.Subtotal.ToString("0.00")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="divider"></div>
+
+        <table>
+            <!-- AQUÍ USAMOS LOS DATOS DIRECTOS DE LA BASE DE DATOS -->
+            @{
+                decimal subtotal = Model.MontoTotal - Model.TotalIGV;
+            }
+            <tr>
+                <td class="text-left">Op. Gravada:</td>
+                <td class="text-right">S/ @subtotal.ToString("0.00")</td>
+            </tr>
+            <tr>
+                <td class="text-left">I.G.V. (18%):</td>
+                <td class="text-right">S/ @Model.TotalIGV.ToString("0.00")</td>
+            </tr>
+            
+            <tr>
+                <td class="text-left bold" style="font-size: 14px; padding-top: 5px;">TOTAL A PAGAR:</td>
+                <td class="text-right bold" style="font-size: 14px; padding-top: 5px;">S/ @Model.MontoTotal.ToString("0.00")</td>
+            </tr>
+            
+            @if(Model.PagoEfectivo > 0)
+            {
+                <tr>
+                    <td class="text-left" style="padding-top: 5px;">Pagó en Efectivo:</td>
+                    <td class="text-right" style="padding-top: 5px;">S/ @Model.PagoEfectivo.ToString("0.00")</td>
+                </tr>
+            }
+            @if(Model.PagoYape > 0)
+            {
+                <tr>
+                    <td class="text-left">Pagó con Yape:</td>
+                    <td class="text-right">S/ @Model.PagoYape.ToString("0.00")</td>
+                </tr>
+            }
+            <tr>
+                <td class="text-left bold">VUELTO:</td>
+                <td class="text-right bold">S/ @Model.Vuelto.ToString("0.00")</td>
+            </tr>
+        </table>
+
+        <div class="divider"></div>
+
+        <div class="text-center">
+            <p style="margin: 5px 0;" class="bold">¡Gracias por tu compra!</p>
+            <!-- Esto servirá después cuando integres SUNAT -->
+            <p style="font-size: 10px; margin: 0;">Ticket de control interno. No válido como comprobante de pago.</p>
+        </div>
+
+    </div>
+
+    <script>
+        window.onload = function() {
+            window.print();
+        }
+    </script>
+</body>
+</html>

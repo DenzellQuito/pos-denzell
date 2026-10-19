@@ -1,0 +1,265 @@
+﻿@model POS_DENZELL.DTOs.DashboardBiDTO
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Reportes e Inteligencia de Negocio";
+
+    // Serializamos en formato JSON seguro (InvariantCulture automático) para Chart.js
+    string jsonFechasLabels = JsonSerializer.Serialize(Model.EvolucionVentas.Select(x => x.EtiquetaFecha));
+    string jsonFechasValores = JsonSerializer.Serialize(Model.EvolucionVentas.Select(x => x.TotalVendido));
+
+    string jsonCatLabels = JsonSerializer.Serialize(Model.VentasPorCategoria.Select(x => x.Categoria));
+    string jsonCatValores = JsonSerializer.Serialize(Model.VentasPorCategoria.Select(x => x.TotalVendido));
+}
+
+<div class="container-fluid py-2">
+    <!-- CABECERA Y BOTONES RÁPIDOS DE NIVEL BI -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h2 class="fw-bold text-dark mb-0">
+                <i class="bi bi-bar-chart-line-fill text-primary"></i> Reportes y Métricas
+            </h2>
+            <small class="text-muted">
+                Mostrando datos del <b>@Model.FechaInicio.ToString("dd/MM/yyyy")</b> al <b>@Model.FechaFin.ToString("dd/MM/yyyy")</b>
+            </small>
+        </div>
+
+        <!-- botones rapidos -->
+        <div class="btn-group shadow-sm" role="group">
+            <a href="/Reporte/Index?periodo=hoy" class="btn @(Model.PeriodoSeleccionado == "hoy" ? "btn-primary fw-bold" : "btn-outline-primary")">
+                📅 Hoy
+            </a>
+            <a href="/Reporte/Index?periodo=semana" class="btn @(Model.PeriodoSeleccionado == "semana" ? "btn-primary fw-bold" : "btn-outline-primary")">
+                📆 Últimos 7 Días
+            </a>
+            <a href="/Reporte/Index?periodo=mes" class="btn @(Model.PeriodoSeleccionado == "mes" ? "btn-primary fw-bold" : "btn-outline-primary")">
+                📊 Este Mes
+            </a>
+            <a href="/Reporte/Index?periodo=anio" class="btn @(Model.PeriodoSeleccionado == "anio" ? "btn-primary fw-bold" : "btn-outline-primary")">
+                📈 Este Año
+            </a>
+        </div>
+    </div>
+
+    <!-- FILTRO DE FECHAS PERSONALIZADO (Para campañas específicas) -->
+    <div class="card shadow-sm border-0 mb-4 bg-light" style="border-radius: 12px;">
+        <div class="card-body py-2 px-3">
+            <form method="get" action="/Reporte/Index" class="row g-2 align-items-center">
+                <div class="col-auto">
+                    <span class="fw-bold text-secondary small"><i class="bi bi-calendar-range"></i> Rango Personalizado:</span>
+                </div>
+                <div class="col-auto">
+                    <input type="date" name="fechaInicio" class="form-control form-control-sm" value="@Model.FechaInicio.ToString("yyyy-MM-dd")" required />
+                </div>
+                <div class="col-auto">
+                    <span class="text-muted small">hasta</span>
+                </div>
+                <div class="col-auto">
+                    <input type="date" name="fechaFin" class="form-control form-control-sm" value="@Model.FechaFin.ToString("yyyy-MM-dd")" required />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-dark fw-bold px-3">
+                        <i class="bi bi-funnel-fill"></i> Analizar Rango
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FILA 1: kpis financieros y fiesta -->
+    <div class="row g-3 mb-4">
+        <!--  Venta Bruta Total -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 bg-success text-white" style="border-radius: 12px;">
+                <div class="card-body">
+                    <small class="text-white-50 text-uppercase fw-bold">Ventas Brutas Totales</small>
+                    <h3 class="fw-bold mt-1 mb-1">S/ @Model.TotalVentasBrutas.ToString("0.00")</h3>
+                    <small class="text-white-50 d-block">
+                        <i class="bi bi-receipt"></i> @Model.CantidadTickets tickets (Prom: S/ @Model.TicketPromedio.ToString("0.00"))
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!--  Desglose Efectivo vs Yape -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                <div class="card-body">
+                    <small class="text-muted text-uppercase fw-bold">Cómo entró el dinero</small>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="small fw-bold text-success"><i class="bi bi-cash-coin"></i> Efectivo (@Model.PorcentajeEfectivo%):</span>
+                        <span class="fw-bold text-dark">S/ @Model.TotalEfectivoNeto.ToString("0.00")</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <span class="small fw-bold text-primary"><i class="bi bi-phone-fill"></i> Yape (@Model.PorcentajeYape%):</span>
+                        <span class="fw-bold text-primary">S/ @Model.TotalYape.ToString("0.00")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--  Gastos de Caja e Ingreso Neto -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                <div class="card-body">
+                    <small class="text-muted text-uppercase fw-bold">Flujo Neto (Ventas - Gastos)</small>
+                    <h3 class="fw-bold text-dark mt-1 mb-1">S/ @Model.IngresoNetoReal.ToString("0.00")</h3>
+                    <small class="text-danger fw-bold d-block">
+                        <i class="bi bi-arrow-down-right-circle"></i> Gastos de Caja: -S/ @Model.TotalGastosCaja.ToString("0.00")
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!--  KPI Especial: Categoría Fiesta -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-warning border-4" style="border-radius: 12px; background-color: #fffdf5;">
+                <div class="card-body">
+                    <small class="text-dark text-uppercase fw-bold">🎉 Línea "Fiesta"</small>
+                    <h3 class="fw-bold text-warning text-dark mt-1 mb-1">S/ @Model.TotalVentasFiesta.ToString("0.00")</h3>
+                    <small class="text-muted d-block">
+                        <b>@Model.PorcentajeFiesta%</b> del total (@Model.UnidadesVendidasFiesta uds. vendidas)
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILA 2: graficos interactivos -->
+    <div class="row g-3 mb-4">
+        <!-- Gráfico 1: Evolución de Ventas -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <h6 class="fw-bold text-dark mb-0"><i class="bi bi-graph-up-arrow text-success me-1"></i> Evolución de Ventas en el Periodo</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartEvolucion" style="max-height: 290px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico 2: Ventas por Categoría -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <h6 class="fw-bold text-dark mb-0"><i class="bi bi-pie-chart-fill text-primary me-1"></i> Ingresos por Categoría (S/)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartCategorias" style="max-height: 290px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILA 3: top 10 productos y categoria -->
+    <div class="row g-3">
+        <!-- Tabla Top 10 Productos Estrella -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                <div class="card-header bg-dark text-white py-3" style="border-radius: 12px 12px 0 0;">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-trophy-fill text-warning me-1"></i> Top 10 Productos Estrella (Más Vendidos)</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">#</th>
+                                    <th>PRODUCTO</th>
+                                    <th>CATEGORÍA</th>
+                                    <th class="text-center">UNIDADES</th>
+                                    <th class="text-end pe-3">TOTAL S/</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.TopProductos.Any())
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">No hay ventas registradas en este periodo.</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    int pos = 1;
+                                    foreach (var prod in Model.TopProductos)
+                                    {
+                                        <tr>
+                                            <td class="ps-3 fw-bold text-secondary">@pos</td>
+                                            <td class="fw-bold text-dark">
+                                                @prod.Descripcion
+                                                @if (prod.EsFiesta)
+                                                {
+                                                    <span class="badge bg-warning text-dark ms-1">🎉 Fiesta</span>
+                                                }
+                                            </td>
+                                            <td class="small text-muted">@prod.Categoria</td>
+                                            <td class="text-center"><span class="badge bg-secondary">@prod.CantidadVendida</span></td>
+                                            <td class="text-end pe-3 fw-bold text-success">S/ @prod.TotalGenerado.ToString("0.00")</td>
+                                        </tr>
+                                        pos++;
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla Desglose Exacto por Categorías -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                <div class="card-header bg-secondary text-white py-3" style="border-radius: 12px 12px 0 0;">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-tags-fill me-1"></i> Ranking de Categorías</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">CATEGORÍA</th>
+                                    <th class="text-center">UDS.</th>
+                                    <th class="text-end pe-3">INGRESOS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.VentasPorCategoria.Any())
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4 text-muted">Sin datos en este rango.</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    foreach (var cat in Model.VentasPorCategoria)
+                                    {
+                                        <tr>
+                                            <td class="ps-3 fw-bold">@cat.Categoria</td>
+                                            <td class="text-center text-muted">@cat.UnidadesVendidas</td>
+                                            <td class="text-end pe-3 fw-bold text-primary">S/ @cat.TotalVendido.ToString("0.00")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/js/reportes.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            iniciarGraficosBi(
+                        @Html.Raw(jsonFechasLabels),
+                        @Html.Raw(jsonFechasValores),
+                        @Html.Raw(jsonCatLabels),
+                @Html.Raw(jsonCatValores)
+            );
+        });
+    </script>
+}

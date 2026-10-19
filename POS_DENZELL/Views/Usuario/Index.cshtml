@@ -1,0 +1,195 @@
+﻿@model IEnumerable<POS_DENZELL.Models.Usuario>
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "Gestión de Usuarios";
+    int idAdminActual = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <div>
+        <h2 class="fw-bold text-dark mb-0"><i class="bi bi-people-fill text-primary"></i> Personal y Cajeros</h2>
+        <small class="text-muted">Crea cuentas para cajeros, cambia contraseñas o bloquea accesos</small>
+    </div>
+    <button type="button" class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCrearUsuario">
+        <i class="bi bi-person-plus-fill"></i> Nuevo Usuario
+    </button>
+</div>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert">
+        <i class="bi bi-check-circle-fill me-1"></i> @TempData["Exito"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card shadow-sm border-0" style="border-radius: 12px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">ID</th>
+                        <th>NOMBRE COMPLETO</th>
+                        <th>USUARIO (LOGIN)</th>
+                        <th>ROL</th>
+                        <th class="text-center">ESTADO</th>
+                        <th class="text-end pe-4">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model)
+                    {
+                        <tr class="@(!u.Activo ? "table-light text-muted" : "")">
+                            <td class="ps-4 fw-bold text-secondary">#@u.IdUsuario</td>
+                            <td class="fw-bold">
+                                @u.Nombre
+                                @if (u.IdUsuario == idAdminActual)
+                                {
+                                    <span class="badge bg-info text-dark ms-1">Tú</span>
+                                }
+                            </td>
+                            <td><code>@u.Username</code></td>
+                            <td>
+                                @if (u.Rol == "Administrador")
+                                {
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-shield-lock-fill"></i> Administrador</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary"><i class="bi bi-person-badge"></i> Cajero</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (u.Activo)
+                                {
+                                    <span class="badge bg-success">Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Bloqueado</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                                        onclick="abrirModalEditar(@u.IdUsuario, '@u.Nombre.Replace("'", "\\'")', '@u.Username.Replace("'", "\\'")', '@u.Rol')">
+                                    <i class="bi bi-pencil-square"></i> Editar / Clave
+                                </button>
+
+                                @if (u.IdUsuario != idAdminActual)
+                                {
+                                    <form asp-action="CambiarEstado" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@u.IdUsuario" />
+                                        @if (u.Activo)
+                                        {
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('¿Bloquear el acceso al sistema para @u.Nombre.Replace("'", "\\'")?');">
+                                                <i class="bi bi-person-x-fill"></i> Desactivar
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                <i class="bi bi-person-check-fill"></i> Reactivar
+                                            </button>
+                                        }
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 1: CREAR USUARIO -->
+<div class="modal fade" id="modalCrearUsuario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-person-plus-fill"></i> Registrar Nuevo Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Crear" method="post">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nombre Completo</label>
+                        <input type="text" name="Nombre" class="form-control" placeholder="Ej: Juan Pérez" required maxlength="100" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Usuario para Login</label>
+                        <input type="text" name="Username" class="form-control" placeholder="Ej: cajero1" required maxlength="50" autocomplete="off" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Contraseña</label>
+                        <input type="password" name="Password" class="form-control" placeholder="Ingresa una clave segura" required maxlength="100" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Rol en el Sistema</label>
+                        <select name="Rol" class="form-select">
+                            <option value="Cajero" selected>Cajero (Solo Ventas y Caja)</option>
+                            <option value="Administrador">Administrador (Acceso Total)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Crear Cuenta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 2: EDITAR USUARIO / CAMBIAR CONTRASEÑA -->
+<div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Editar Usuario / Cambiar Clave</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Editar" method="post">
+                <input type="hidden" name="IdUsuario" id="editIdUsuario" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nombre Completo</label>
+                        <input type="text" name="Nombre" id="editNombre" class="form-control" required maxlength="100" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Usuario para Login</label>
+                        <input type="text" name="Username" id="editUsername" class="form-control" required maxlength="50" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nueva Contraseña <small class="text-muted fw-normal">(Opcional)</small></label>
+                        <input type="password" name="NuevaPassword" class="form-control" placeholder="Déjalo vacío para mantener su clave actual" maxlength="100" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Rol en el Sistema</label>
+                        <select name="Rol" id="editRol" class="form-select">
+                            <option value="Cajero">Cajero (Solo Ventas y Caja)</option>
+                            <option value="Administrador">Administrador (Acceso Total)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-dark fw-bold px-4">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+        <script src="~/js/usuario.js" asp-append-version="true" ></script> 
+}

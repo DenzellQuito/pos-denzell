@@ -1,0 +1,86 @@
+﻿@model IEnumerable<POS_DENZELL.DTOs.TurnoHistorialDTO>
+@{
+    ViewData["Title"] = "Auditoría de Turnos";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <h2 class="fw-bold text-dark"><i class="bi bi-clock-history text-primary"></i> Historial de Turnos y Arqueos</h2>
+    <a href="/Home/Index" class="btn btn-outline-secondary fw-bold shadow-sm">
+        <i class="bi bi-arrow-left"></i> Volver al Panel
+    </a>
+</div>
+
+<div class="card shadow-sm border-0" style="border-radius: 12px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">TURNO</th>
+                        <th>CAJERO</th>
+                        <th>APERTURA</th>
+                        <th>CIERRE</th>
+                        <th class="text-end">INICIAL</th>
+                        <th class="text-end">SISTEMA</th>
+                        <th class="text-end">FÍSICO</th>
+                        <th class="text-center">ESTADO</th>
+                        <th class="text-end">DESCUADRE</th>
+                        <th class="text-end pe-4">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var turno in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 fw-bold text-secondary">#@turno.IdTurno.ToString("D4")</td>
+                            <td><i class="bi bi-person-badge"></i> @turno.NombreCajero</td>
+                            <td class="small text-muted">@turno.FechaApertura.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="small text-muted">
+                                @(turno.FechaCierre.HasValue ? turno.FechaCierre.Value.ToString("dd/MM/yyyy HH:mm") : "---")
+                            </td>
+                            <td class="text-end text-muted">S/ @turno.MontoInicial.ToString("0.00")</td>
+                            <td class="text-end text-muted">S/ @turno.MontoFinalCalculado.ToString("0.00")</td>
+                            <td class="text-end fw-bold">S/ @turno.MontoFinalReal.ToString("0.00")</td>
+
+                            <td class="text-center">
+                                @if (turno.Estado == "Abierto")
+                                {
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-unlock-fill"></i> Abierto</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary"><i class="bi bi-lock-fill"></i> Cerrado</span>
+                                }
+                            </td>
+
+                            <td class="text-end fw-bold">
+                                @if (turno.Estado == "Abierto")
+                                {
+                                    <span class="text-muted">En proceso...</span>
+                                }
+                                else if (turno.Descuadre == 0)
+                                {
+                                    <span class="text-success"><i class="bi bi-check-circle-fill"></i> Exacto</span>
+                                }
+                                else if (turno.Descuadre < 0)
+                                {
+                                    <span class="text-danger"><i class="bi bi-arrow-down-circle-fill"></i> S/ @turno.Descuadre.ToString("0.00")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-primary"><i class="bi bi-arrow-up-circle-fill"></i> +S/ @turno.Descuadre.ToString("0.00")</span>
+                                }
+                            </td>
+
+                            <td class="text-end pe-4">
+                                <a href="/Caja/DetalleTurno/@turno.IdTurno" class="btn btn-sm btn-outline-primary fw-bold shadow-sm">
+                                    <i class="bi bi-receipt"></i> Ver Ventas
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

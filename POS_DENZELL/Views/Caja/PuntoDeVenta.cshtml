@@ -1,0 +1,247 @@
+﻿@model IEnumerable<POS_DENZELL.Models.Producto>
+@{
+    ViewData["Title"] = "Punto de Venta";
+    Layout = "_Layout";
+}
+
+<style>
+    .pos-container {
+        height: calc(100vh - 70px);
+        overflow: hidden;
+    }
+
+    .productos-panel {
+        height: 100%;
+        overflow-y: auto;
+        padding-right: 15px;
+    }
+
+    .boleta-panel {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .lista-boleta {
+        flex-grow: 1;
+        overflow-y: auto;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        margin-bottom: 15px;
+    }
+
+    .producto-card {
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .producto-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+            border-color: #198754 !important;
+        }
+    
+    .btn-outline-yape {
+        color: #742581;
+        border: 1px solid #742581;
+        background-color: transparent;
+        transition: all 0.2s;
+    }
+
+        .btn-outline-yape:hover {
+            color: #ffffff;
+            background-color: #742581;
+        }
+</style>
+
+<div class="container-fluid pos-container py-3 bg-light">
+    <!-- Guardamos el ID del turno abierto de forma invisible para enviarlo al cobrar -->
+    <input type="hidden" id="IdTurnoActual" value="@ViewBag.IdTurno" />
+
+    <div class="row h-100">
+ 
+        <!-- PANEL IZQUIERDO: BUSCADOR Y LISTA DE PRODUCTOS -->
+
+        <div class="col-md-8 productos-panel">
+
+            <!-- Barra de Categorías -->
+            <div class="d-flex gap-2 overflow-auto mb-3 pb-2" id="filtroCategorias" style="white-space: nowrap;">
+                <button class="btn btn-success rounded-pill px-4 filter-btn active" onclick="filtrarPorCategoria('todas', this)">
+                    Todas
+                 </button>
+                <button type="button" class="btn btn-outline-success rounded-pill px-4 filter-btn"
+                     onclick="filtrarPorCategoria('fiesta', this)">
+                       🎉 Fiesta
+                 </button>
+
+                <!-- Generamos los botones dinámicamente -->
+                @if (ViewBag.Categorias != null)
+                {
+                    foreach (var categoria in ViewBag.Categorias)
+                    {
+                    <button class="btn btn-outline-success rounded-pill px-4 filter-btn" 
+                         onclick="filtrarPorCategoria('@categoria.IdCategoria', this)">
+                          @categoria.Nombre
+                       </button>
+                    }
+                }
+            </div>
+
+            <!-- Buscador de texto -->
+            <div class="input-group input-group-lg mb-3 shadow-sm">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" id="buscadorProductos" class="form-control border-start-0" placeholder="Buscar por código o descripción..." autocomplete="off">
+            </div>
+
+            <!-- Productos mostrar y enviar al carrito -->
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3" id="gridProductos">
+                @foreach (var p in Model)
+                {
+                    var imagenSrc = string.IsNullOrEmpty(p.RutaImagen) ? "/images/default-product.png" : p.RutaImagen;
+
+                    
+                    <div class="col item-producto" data-descripcion="@p.Descripcion.ToLower()" data-codigo="@p.CodigoBarras" data-categoria="@p.IdCategoria" data-fiesta="@(p.EsFiesta ? "true" : "false")">
+
+                        <div class="card h-100 shadow-sm producto-card border-0" onclick="agregarAlCarrito(@p.IdProducto, '@p.Descripcion.Replace("'", "\\'")',
+                                                                        @p.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture).Replace(",", "."), @p.Stock)">
+
+                            <div class="text-center pt-3">
+                                <img src="@imagenSrc" alt="@p.Descripcion" class="img-fluid rounded" style="max-height: 80px; object-fit: contain;">
+                            </div>
+
+                            <div class="card-body text-center p-2">
+                                <h6 class="card-title text-truncate mb-1" title="@p.Descripcion" style="font-size: 0.9rem;">@p.Descripcion</h6>
+                                <p class="text-muted small mb-1" style="font-size: 0.75rem;">Cód: @p.CodigoBarras</p>
+                                <h5 class="text-success fw-bold mb-0">S/ @p.Precio.ToString("0.00")</h5>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+
+        <!-- PANEL DERECHO: LA BOLETA Y EL COBRO            -->
+
+        <div class="col-md-4 boleta-panel mb-4">
+
+            <div class="card shadow-sm border-0 bg-white" style="position: sticky; top: 20px; height: calc(100vh - 120px); display: flex; flex-direction: column;">
+
+                <!-- CABECERA -->
+                <div class="card-header bg-success text-white py-3 text-center rounded-top">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-receipt"></i> Detalle de Venta</h5>
+                </div>
+
+                <!-- CUERPO (LISTA DE PRODUCTOS) -->
+                <div class="card-body p-2" id="carritoItems" style="flex-grow: 1; overflow-y: auto; overflow-x: hidden;">
+                    <!-- Esto se llenará con JavaScript -->
+                    <div class="text-center text-muted mt-5" id="carritoVacio">
+                        <i class="bi bi-cart-x fs-1"></i>
+                        <p>No hay productos en la boleta</p>
+                    </div>
+                </div>
+
+                <!-- PIE (TOTALES Y BOTONES FIJOS) -->
+                <div class="card-footer bg-white border-top p-3">
+
+                    <div class="bg-light p-3 rounded mb-3 border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Subtotal:</span>
+                            <span class="fw-bold" id="lblSubtotal">S/ 0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fs-4 fw-bold">TOTAL:</span>
+                         
+                            <span class="fs-4 fw-bold text-success" id="lblTotal" style="white-space: nowrap;">S/ 0.00</span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success btn-lg fw-bold w-100 py-3 shadow-sm mb-2" onclick="abrirModalCobro()" id="btnCobrar" disabled>
+                        COBRAR (F2)
+                    </button>
+                    <button class="btn btn-outline-danger fw-bold w-100" onclick="limpiarCarrito()">
+                        Cancelar Venta
+                    </button>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL DE COBRO (PAGO MIXTO)                    -->
+
+        <div class="modal fade" id="modalCobro" tabindex="-1" aria-labelledby="modalCobroLabel" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title fw-bold" id="modalCobroLabel"><i class="bi bi-cash-coin"></i> Finalizar Venta</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+
+                        <!-- Resumen Total -->
+                        <div class="text-center mb-4">
+                            <h6 class="text-muted text-uppercase mb-1">Total a Cobrar</h6>
+                            <h1 class="fw-bold text-dark display-5" id="modalTotalVenta">S/ 0.00</h1>
+                        </div>
+
+                        <!-- Entradas de Pago -->
+                        <div class="row mb-3">
+                            <!-- Columna Efectivo -->
+                            <div class="col-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label fw-bold text-secondary mb-0">Pago en Efectivo</label>
+                                    <button type="button" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 0.75rem;" onclick="llenarMontoExacto('efectivo')">Exacto</button>
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text text-success bg-light">S/</span>
+                                    <input type="number" id="inputEfectivo" class="form-control fs-5" step="0.10" min="0" oninput="calcularVuelto()">
+                                </div>
+                            </div>
+
+                            <!-- Columna Yape -->
+                            <div class="col-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label fw-bold text-secondary mb-0">Pago con Yape</label>
+                                    <button type="button" class="btn btn-sm btn-outline-yape py-0 px-2" style="font-size: 0.75rem;" onclick="llenarMontoExacto('yape')">Exacto</button>
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light" style="color: #742581; font-weight: bold;">Y!</span>
+                                    <input type="number" id="inputYape" class="form-control fs-5" step="0.10" min="0" oninput="calcularVuelto()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Datos adicionales de Yape -->
+                        <div class="row border rounded p-2 mx-0 mb-4 bg-light">
+                            <div class="col-12 mb-2">
+                                <label class="form-label text-muted small fw-bold mb-1"><i class="bi bi-hash"></i> N° de Operación Yape (Opcional)</label>
+                                <input type="text" id="inputNumeroOperacion" class="form-control form-control-sm" placeholder="Ej: 012345678" maxlength="20">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-muted small fw-bold mb-1"><i class="bi bi-camera"></i> Adjuntar captura (Opcional)</label>
+                                <input class="form-control form-control-sm" type="file" id="inputFotoYape" accept="image/*">
+                            </div>
+                        </div>
+
+                        <!-- Cálculo de Vuelto -->
+                        <div class="alert alert-secondary d-flex justify-content-between align-items-center mb-0 border-0 shadow-sm" id="cajaVuelto">
+                            <span class="fs-5 fw-bold text-muted" id="lblTextoVuelto">Falta:</span>
+                            <span class="fs-3 fw-bold text-danger" id="modalVuelto">S/ 0.00</span>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success fw-bold px-4 shadow-sm" id="btnConfirmarVenta" disabled onclick="procesarVentaEnServidor()">
+                            Confirmar Cobro
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/js/puntoVenta.js" asp-append-version="true"></script>
+}

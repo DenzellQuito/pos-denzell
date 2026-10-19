@@ -1,0 +1,116 @@
+﻿@model IEnumerable<POS_DENZELL.Models.Producto>
+@{
+    ViewData["Title"] = "Inventario de Productos";
+}
+
+<!-- Cabecera con botón de crear -->
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <h2 class="fw-bold text-dark"><i class="bi bi-box-seam text-primary"></i> Inventario de Productos</h2>
+    <a href="/Producto/Crear" class="btn btn-primary fw-bold shadow-sm">
+        <i class="bi bi-plus-lg"></i> Registrar Nuevo Dulce
+    </a>
+</div>
+
+<div class="card shadow-sm border-0 mb-4" style="border-radius: 12px;">
+    <div class="card-body bg-light rounded" style="border-radius: 12px;">
+        <div class="row g-2 align-items-center">
+            
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <!-- Le pusimos id="inputBusqueda" -->
+                    <input type="text" id="inputBusqueda" class="form-control" placeholder="Escribe para buscar..." autocomplete="off">
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Le pusimos id="selectCategoria" -->
+                <select id="selectCategoria" asp-items="ViewBag.ListaCategorias" class="form-select">
+                    <option value="">-- Todas las Categorías --</option>
+                    <option value="fiesta" class="fw-bold">🎉 Categoría: Fiesta</option>
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex gap-2">
+                <!-- El botón limpiar ahora solo recarga la página vaciando todo -->
+                <a asp-action="Index" class="btn btn-outline-secondary fw-bold w-100"><i class="bi bi-eraser"></i> Limpiar Filtros</a>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de datos -->
+<div class="card shadow-sm border-0" style="border-radius: 12px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4 text-muted">IMAGEN</th>
+                        <th class="text-muted">CÓDIGO</th>
+                        <th class="text-muted">DESCRIPCIÓN</th>
+                        <th class="text-muted">CATEGORÍA</th>
+                        <th class="text-muted text-end">PRECIO</th>
+                        <th class="text-muted text-center">STOCK</th>
+                        <th class="text-muted text-end pe-4">ACCIONES</th>
+                    </tr>
+                </thead>
+               <tbody>
+    @foreach (var item in Model)
+    {
+        // Convertimos a minúsculas para que la búsqueda no falle por mayúsculas/minúsculas
+        string nombreData = item.Descripcion.ToLower();
+        string codigoData = item.CodigoBarras.ToLower();
+        string categoriaData = item.IdCategoria?.ToString() ?? "";
+
+            <tr class="fila-producto" data-nombre="@nombreData" data-codigo="@codigoData" data-categoria="@categoriaData" data-fiesta="@(item.EsFiesta ? "true" : "false")">
+            <td class="ps-4 py-3">
+                @{ string rutaImg = string.IsNullOrEmpty(item.RutaImagen) ? "/images/default-product.png" : item.RutaImagen; }
+                <img src="@rutaImg" class="rounded shadow-sm" style="width: 45px; height: 45px; object-fit: cover;" />
+            </td>
+            <td><span class="badge bg-secondary text-white" style="letter-spacing: 1px;">@item.CodigoBarras</span></td>
+            <td class="fw-bold text-dark">@item.Descripcion</td>
+                            <td>
+                                @(item.Categoria != null ? item.Categoria.Nombre : "Sin Categoría")
+                                @if (item.EsFiesta)
+                                {
+                                    <span class="badge bg-warning text-dark ms-1 shadow-sm">🎉 Fiesta</span>
+                                }
+                            </td>
+           
+            <td class="text-success fw-bold text-end fs-6">S/ @item.Precio.ToString("0.00")</td>
+            <td class="text-center">
+                @if (item.Stock <= 5)
+                {
+                    <span class="badge bg-danger px-2 py-1"><i class="bi bi-exclamation-triangle"></i> @item.Stock</span>
+                }
+                else
+                {
+                    <span class="badge bg-success px-2 py-1">@item.Stock</span>
+                }
+            </td>
+            <td class="text-end pe-4">
+                <a href="/Producto/Editar/@item.IdProducto" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil-square"></i> Editar
+                </a>
+            </td>
+        </tr>
+    }
+    <!-- Fila de "No hay resultados" oculta por defecto -->
+    <tr id="mensajeVacio" style="display: none;">
+        <td colspan="7" class="text-center py-5 text-muted fw-bold">
+            <i class="bi bi-search d-block mb-2 fs-2"></i> No se encontraron dulces con esa búsqueda.
+        </td>
+    </tr>
+</tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+  
+    <script src="~/js/productos.js" asp-append-version="true"></script>
+}

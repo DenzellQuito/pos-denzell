@@ -1,0 +1,165 @@
+﻿@model IEnumerable<POS_DENZELL.DTOs.VentaTurnoDTO>
+@{
+    ViewData["Title"] = "Detalle de Ventas del Turno";
+    var resumen = ViewBag.Resumen as POS_DENZELL.DTOs.ResumenCajaDTO;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <div>
+        <h2 class="fw-bold text-dark mb-0">
+            <i class="bi bi-receipt-cutoff text-primary"></i> Ventas del Turno #@(resumen?.IdTurno.ToString("D4"))
+        </h2>
+        <small class="text-muted">Auditoría de comprobantes emitidos, pagos con Yape y reimpresión de tickets</small>
+    </div>
+    <a href="/Caja/Historial" class="btn btn-outline-secondary fw-bold shadow-sm">
+        <i class="bi bi-arrow-left"></i> Volver al Historial
+    </a>
+</div>
+
+@if (resumen != null)
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                <div class="card-body">
+                    <small class="text-muted fw-bold">FONDO INICIAL</small>
+                    <h4 class="fw-bold text-secondary mb-0 mt-1">S/ @resumen.MontoInicial.ToString("0.00")</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                <div class="card-body">
+                    <small class="text-muted fw-bold">VENTAS EFECTIVO (NETO)</small>
+                    <h4 class="fw-bold text-success mb-0 mt-1">+ S/ @resumen.IngresosEfectivo.ToString("0.00")</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                <div class="card-body">
+                    <small class="text-muted fw-bold">TOTAL EN YAPE</small>
+                    <h4 class="fw-bold text-primary mb-0 mt-1">S/ @resumen.IngresosYape.ToString("0.00")</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 bg-dark text-white" style="border-radius: 12px;">
+                <div class="card-body">
+                    <small class="text-white-50 fw-bold">EFECTIVO ESPERADO EN CAJÓN</small>
+                    <h4 class="fw-bold text-warning mb-0 mt-1">S/ @resumen.EfectivoEsperadoFisico.ToString("0.00")</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card shadow-sm border-0" style="border-radius: 12px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">COMPROBANTE</th>
+                        <th>HORA</th>
+                        <th>CAJERO</th>
+                        <th class="text-end">EFECTIVO</th>
+                        <th class="text-end">VUELTO</th>
+                        <th class="text-end">YAPE</th>
+                        <th class="text-center">OPERACIÓN / FOTO YAPE</th>
+                        <th class="text-end">TOTAL VENTA</th>
+                        <th class="text-end pe-4">TICKET</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted fw-bold">
+                                <i class="bi bi-inbox d-block mb-2 fs-2"></i> Aún no se han registrado ventas en este turno.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var v in Model)
+                        {
+                            <tr>
+                                <td class="ps-4 fw-bold text-dark">
+                                    <span class="badge bg-dark me-1">TK</span> @v.NumeroComprobante
+                                </td>
+                                <td class="text-muted small">@v.FechaHora.ToString("dd/MM/yyyy hh:mm tt")</td>
+                                <td>@v.NombreCajero</td>
+                                <td class="text-end text-muted">S/ @v.PagoEfectivo.ToString("0.00")</td>
+                                <td class="text-end text-muted">S/ @v.Vuelto.ToString("0.00")</td>
+                                <td class="text-end fw-bold @(v.PagoYape > 0 ? "text-primary" : "text-muted")">
+                                    S/ @v.PagoYape.ToString("0.00")
+                                </td>
+                                <td class="text-center">
+                                    @if (v.PagoYape > 0)
+                                    {
+                                        <span class="badge bg-light text-dark border me-1">
+                                            Op: @(string.IsNullOrEmpty(v.NumeroOperacion) ? "S/N" : v.NumeroOperacion)
+                                        </span>
+                                        @if (!string.IsNullOrEmpty(v.RutaFotoComprobante))
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-info py-0 px-2"
+                                                    onclick="verFotoYape('@v.RutaFotoComprobante', '@v.NumeroComprobante', '@(v.NumeroOperacion ?? "Sin Número")')">
+                                                <i class="bi bi-image"></i> Ver Foto
+                                            </button>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">---</span>
+                                    }
+                                </td>
+                                <td class="text-end fw-bold text-success fs-6">S/ @v.MontoTotal.ToString("0.00")</td>
+                                <td class="text-end pe-4">
+                                    <button type="button" class="btn btn-sm btn-outline-dark fw-bold"
+                                            onclick="reimprimirTicket(@v.IdVenta)">
+                                        <i class="bi bi-printer"></i> Reimprimir
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver la foto del comprobante Yape -->
+<div class="modal fade" id="modalFotoYape" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold" id="tituloModalYape">Comprobante Yape</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center bg-light">
+                <p class="mb-2 fw-bold text-secondary" id="subtituloModalYape"></p>
+                <img id="imgComprobanteYape" src="" class="img-fluid rounded shadow-sm" style="max-height: 450px;" alt="Evidencia Yape" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function reimprimirTicket(idVenta) {
+            const urlTicket = `/Caja/Ticket/${idVenta}`;
+            window.open(urlTicket, 'TicketVenta', 'width=400,height=600,scrollbars=yes');
+        }
+
+        function verFotoYape(rutaFoto, comprobante, nroOperacion) {
+            document.getElementById('tituloModalYape').innerText = 'Voucher Yape - ' + comprobante;
+            document.getElementById('subtituloModalYape').innerText = 'N° de Operación: ' + nroOperacion;
+            document.getElementById('imgComprobanteYape').src = rutaFoto;
+
+            const modal = new bootstrap.Modal(document.getElementById('modalFotoYape'));
+            modal.show();
+        }
+    </script>
+}

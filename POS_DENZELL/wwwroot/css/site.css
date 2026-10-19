@@ -1,0 +1,136 @@
+:root {
+    --brand: #15803d;
+    --brand-dark: #166534;
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --border: #e5e7eb;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --nav-bg: #111827;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* ---------- Navbar ---------- */
+.app-navbar {
+    background: var(--nav-bg);
+    padding: .65rem 0;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+    .app-navbar .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        font-weight: 700;
+        font-size: 1.05rem;
+        letter-spacing: -.01em;
+        color: #fff;
+    }
+
+.brand-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: var(--brand);
+    color: #fff;
+}
+
+.app-navbar .nav-link {
+    color: #9ca3af;
+    font-size: .9rem;
+    font-weight: 500;
+    padding: .5rem .8rem;
+    border-radius: 8px;
+    transition: background .15s, color .15s;
+}
+
+    .app-navbar .nav-link:hover {
+        color: #fff;
+        background: rgba(255,255,255,.06);
+    }
+
+    .app-navbar .nav-link.active {
+        color: #fff;
+        background: rgba(255,255,255,.10);
+    }
+
+    .app-navbar .nav-link i {
+        margin-right: .25rem;
+        opacity: .85;
+    }
+
+/* ---------- Botón de marca ---------- */
+.btn-brand {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: .4rem .9rem;
+}
+
+    .btn-brand:hover {
+        background: var(--brand-dark);
+        border-color: var(--brand-dark);
+        color: #fff;
+    }
+
+/* ---------- Menú de usuario ---------- */
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    color: #e5e7eb;
+    text-decoration: none;
+    font-size: .9rem;
+    font-weight: 500;
+}
+
+    .user-menu:hover {
+        color: #fff;
+    }
+
+.user-avatar {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #374151;
+    color: #fff;
+    font-size: .85rem;
+    font-weight: 600;
+}
+
+/* ---------- Tarjetas y tipografía ---------- */
+.card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+}
+
+h1, h2, h3, h4, h5 {
+    letter-spacing: -.01em;
+    font-weight: 700;
+}
+
+.app-footer {
+    padding: 1rem 0;
+    font-size: .8rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+}

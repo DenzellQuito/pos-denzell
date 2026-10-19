@@ -1,0 +1,25 @@
+﻿body {
+    background-color: #f4f6f9;
+    height: 100vh;
+    display: flex;
+    flex-direction: row; 
+    align-items: center;
+    justify-content: center;
+}
+
+.login-card {
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.btn-brand {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+    font-weight: bold;
+}
+
+    .btn-brand:hover {
+        background-color: #218838;
+        color: white;
+    }
