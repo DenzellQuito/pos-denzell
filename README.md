@@ -150,4 +150,4 @@ POS_DENZELL/
 
 ## 👤 Autor
 
-**Denzell Washington Jose Quito** · Estudiante de 7.º ciclo de Ingeniería de Sistemas · www.linkedin.com/in/denzell-quito-gilio-ab266a389 · denzellcrac@gmail.com
+**Denzell Washington Jose Quito** · Estudiante de 7.º ciclo de Ingeniería de Sistemas · www.linkedin.com/in/denzell-quito-gilio · denzellcrac@gmail.com
