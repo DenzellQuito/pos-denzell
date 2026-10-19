@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-using POS_DENZELL.Data;
-using POS_DENZELL.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using POS_DENZELL.Data;
+using POS_DENZELL.Models;
+using POS_DENZELL.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -22,7 +24,16 @@ builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
+builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var sp = scope.ServiceProvider;
+    await DbInicializador.EjecutarAsync(
+        sp.GetRequiredService<ApplicationDbContext>(),
+        sp.GetRequiredService<IPasswordHasher<Usuario>>(),
+        app.Configuration, app.Environment);
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

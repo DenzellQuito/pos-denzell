@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using POS_DENZELL.Data;
 using POS_DENZELL.Models;
 
@@ -15,13 +16,14 @@ namespace POS_DENZELL.Services
     public class UsuarioService : IUsuarioService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IPasswordHasher<Usuario> _hasher;
 
-        public UsuarioService(ApplicationDbContext context)
+        public UsuarioService(ApplicationDbContext context, IPasswordHasher<Usuario> hasher)
         {
             _context = context;
+            _hasher = hasher;
         }
 
-      
         public async Task<List<Usuario>> ObtenerTodosAsync()
         {
             return await _context.Usuarios
@@ -31,7 +33,6 @@ namespace POS_DENZELL.Services
                 .ToListAsync();
         }
 
-   
         public async Task CrearUsuarioAsync(string nombre, string username, string password, string rol)
         {
             string userLimpio = username.Trim();
@@ -46,16 +47,17 @@ namespace POS_DENZELL.Services
             {
                 Nombre = nombre.Trim(),
                 Username = userLimpio,
-                PasswordHash = password.Trim(),
                 Rol = rol == "Administrador" ? "Administrador" : "Cajero",
                 Activo = true
             };
+
+            // La contraseña nunca se guarda en texto plano: solo su hash
+            nuevoUsuario.PasswordHash = _hasher.HashPassword(nuevoUsuario, password.Trim());
 
             _context.Usuarios.Add(nuevoUsuario);
             await _context.SaveChangesAsync();
         }
 
-       
         public async Task EditarUsuarioAsync(int idUsuario, string nombre, string username, string? nuevaPassword, string rol)
         {
             var usuario = await _context.Usuarios.FindAsync(idUsuario);
@@ -75,7 +77,7 @@ namespace POS_DENZELL.Services
 
             if (!string.IsNullOrWhiteSpace(nuevaPassword))
             {
-                usuario.PasswordHash = nuevaPassword.Trim();
+                usuario.PasswordHash = _hasher.HashPassword(usuario, nuevaPassword.Trim());
             }
 
             await _context.SaveChangesAsync();
