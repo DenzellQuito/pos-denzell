@@ -7,7 +7,7 @@
 ![Bootstrap 5](https://img.shields.io/badge/Bootstrap%205-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
 ![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)
 
-> **Propósito:** aplicación web *full-stack* para digitalizar la operación de un comercio minorista y mayorista de confitería y abarrotes. Agiliza el cobro en mostrador, cuadra la caja al céntimo, deja evidencia de los pagos por **Yape** y convierte las ventas en reportes útiles para decidir qué comprar y cuándo.
+> **Propósito:** aplicación web *full-stack* para digitalizar la operación de un comercio minorista y mayorista de confitería y abarrotes. Agiliza el cobro en mostrador, cuadra la caja al céntimo, deja evidencia de los pagos por **Yape**, gestiona la cartera de clientes y convierte las ventas en reportes útiles para decidir qué comprar y cuándo.
 
 ---
 
@@ -15,10 +15,10 @@
 
 | Dimensión | Detalle |
 | :--- | :--- |
-| **🎯 Problema** | Cobros manuales lentos, descuadres entre el efectivo de la gaveta y los ingresos por Yape, y poca visibilidad de qué productos y horarios generan más ventas. |
-| **💡 Solución** | POS con **cobro mixto (Efectivo + Yape)**, arqueo de caja por turno y paneles de **Business Intelligence**. |
+| **🎯 Problema** | Cobros manuales lentos, descuadres entre el efectivo de la gaveta y los ingresos por Yape, y poca visibilidad de qué productos, clientes y horarios generan más ventas. |
+| **💡 Solución** | POS con **cobro mixto (Efectivo + Yape)**, registro rápido de clientes en caja, arqueo por turno y paneles de **Business Intelligence**. |
 | **👨‍💻 Rol** | Diseño y desarrollo *end-to-end* en solitario: backend, modelo de datos y frontend. Primer proyecto full-stack con .NET. |
-| **🔍 Enfoque técnico** | Integridad transaccional, precisión contable, trazabilidad de pagos digitales y separación en capas. |
+| **🔍 Enfoque técnico** | Integridad transaccional, precisión contable, trazabilidad de pagos digitales, inmutabilidad histórica de tickets y separación en capas. |
 | **🚀 Estado** | ✅ Funcional de punta a punta y listo para su primer despliegue. Piloto programado en un negocio real. |
 
 ---
@@ -29,13 +29,13 @@
 
 | 🛒 Punto de Venta | 💳 Cobro Mixto | 🧾 Ticket Térmico |
 | :---: | :---: | :---: |
-| ![Punto de venta](docs/img/pos.png) | ![Cobro mixto](docs/img/cobro-mixto.png) | ![Ticket](docs/img/ticket.png) |
-| *Catálogo con búsqueda instantánea y carrito* | *Efectivo + Yape con cálculo de vuelto* | *Ticket de 80mm, marcado como control interno* |
+| ![Punto de venta](docs/img/pos.png) | ![Cobro mixto](docs/img/cobro-mixto.png) | ![Ticket](docs/img/ticket.jpg) |
+| *Catálogo con búsqueda instantánea y carrito* | *Efectivo + Yape y asignación rápida de cliente* | *Ticket de 80mm, marcado como control interno* |
 
 | 🔐 Arqueo de Caja | 📱 Evidencia Yape | 📊 Business Intelligence |
 | :---: | :---: | :---: |
 | ![Historial de arqueos](docs/img/historial-arqueo.png) | ![Voucher Yape](docs/img/voucher-yape.jpg) | ![Reportes](docs/img/reportes.png) |
-| *Cierre de turno con descuadre calculado* | *Visor de comprobante (datos sensibles difuminados)* | *KPIs, gráficos y ranking de productos* |
+| *Cierre de turno con descuadre calculado* | *Visor de comprobante (datos sensibles difuminados)* | *KPIs, gráficos, Top Productos y Top Clientes* |
 
 ---
 
@@ -44,7 +44,7 @@
 Cada decisión responde a un problema concreto de la operación de caja:
 
 * **🔸 Reto: mantener el código ordenado y fácil de probar.**
-  ➔ **Arquitectura en capas basada en servicios.** Los controladores solo manejan HTTP y seguridad. La lógica de negocio vive en servicios inyectados por interfaz (`IVentaService`, `ICajaService`, `IProductoService`, `ICategoriaService`, `IReporteService`, `IUsuarioService`, `IAuthService`). Ningún controlador accede directamente a `DbContext`.
+  ➔ **Arquitectura en capas basada en servicios.** Los controladores solo manejan HTTP y seguridad. La lógica de negocio vive en servicios inyectados por interfaz (`IVentaService`, `ICajaService`, `IProductoService`, `ICategoriaService`, `IClienteService`, `IReporteService`, `IUsuarioService`, `IAuthService`). Ningún controlador accede directamente a `DbContext`.
 
 * **🔸 Reto: evitar diferencias de céntimos entre el carrito (JS), la base de datos y el ticket impreso.**
   ➔ **Redondeo comercial unificado.**
@@ -55,11 +55,14 @@ Cada decisión responde a un problema concreto de la operación de caja:
 * **🔸 Reto: que ninguna venta quede a medias ante un error del servidor.**
   ➔ **Transacción atómica (`BeginTransactionAsync`).** El correlativo, la cabecera (`Venta`), el detalle (`VentaDetalle`) y el descuento de stock se confirman juntos. Si algo falla, se ejecuta `RollbackAsync()` y se elimina el archivo del comprobante Yape que ya se hubiera subido al servidor.
 
+* **🔸 Reto: vincular clientes para analítica sin perder velocidad en caja ni alterar tickets pasados.**
+  ➔ **Patrón *Snapshot* (Fotografía Histórica) + Clave Foránea Opcional (`IdCliente`).** Si es una venta rápida al paso, `IdCliente` queda en `null` y el ticket imprime `"Clientes varios"`. Si se asigna un cliente (DNI/RUC), se guarda su `IdCliente` para agrupar sus compras en el BI y se copian su documento y nombre en la cabecera de `Venta`, garantizando que los tickets antiguos sean inmutables aunque el cliente actualice su razón social en el futuro.
+
 * **🔸 Reto: cuadrar la gaveta sin que los pagos digitales distorsionen el efectivo.**
   ➔ **Fórmula de arqueo separada por medio de pago.** El efectivo esperado es `Fondo Inicial + Efectivo Neto de Ventas − Gastos Menores`; los ingresos por Yape se llevan aparte. Así se detectan sobrantes o faltantes reales al cerrar cada turno.
 
 * **🔸 Reto: conservar el historial para reportes y cierres pasados.**
-  ➔ **Borrado lógico (*soft delete*).** No se hace `DELETE` físico en `Productos`, `Categorias` ni `Usuarios`; se usa `Activo = false`, así las ventas antiguas siguen apuntando a datos válidos.
+  ➔ **Borrado lógico (*soft delete*).** No se hace `DELETE` físico en `Productos`, `Categorias`, `Clientes` ni `Usuarios`; se usa `Activo = false`, así las ventas antiguas siguen apuntando a datos válidos.
 
 * **🔸 Reto: evitar errores de coma/punto decimal entre PC (Windows) y tablets (Android/iOS).**
   ➔ **`InvariantCulture`.** Normalización de decimales entre vistas Razor, JavaScript y C#, independiente de la configuración regional del dispositivo.
@@ -70,9 +73,10 @@ Cada decisión responde a un problema concreto de la operación de caja:
 
 ### 🛒 1. Punto de Venta
 * **Búsqueda instantánea:** filtrado en el navegador (sin consultas al servidor) por descripción, código de barras, categoría y etiqueta de campaña (**🎉 Fiesta**).
+* **Asignación y registro rápido de clientes en cobro:** buscador AJAX por DNI, RUC o nombre y creación de clientes nuevos (con dirección opcional) directamente dentro del modal de cobro sin perder el carrito actual.
 * **Cobro mixto (Efectivo + Yape):** cálculo automático de vuelto y botones de monto exacto.
 * **Evidencia de pagos Yape:** registro del número de operación y foto del comprobante, con validación de formato y nombre auditable (`YAPE_yyyyMMddHHmmss_Operacion.jpg`).
-* **Impresión térmica:** ticket para impresoras de **80mm y 58mm** con reglas `@media print`.
+* **Impresión térmica:** ticket para impresoras de **80mm y 58mm** con reglas `@media print` (incluye datos del cliente o *"Clientes varios"* por defecto).
 
 ### 🔐 2. Turnos, Arqueo y Auditoría
 * **Ciclo del turno:** apertura con fondo inicial, registro de egresos menores de gaveta y cierre con cálculo automático del descuadre.
@@ -80,18 +84,23 @@ Cada decisión responde a un problema concreto de la operación de caja:
 
 ### 📊 3. Business Intelligence
 * **Dashboard operativo (`Home/Index`):** turno en vivo, comparativa Efectivo vs. Yape, cantidad de tickets y alerta de **stock crítico (`Stock <= 5`)**.
-* **Dashboard ejecutivo (`Reporte/Index`):** filtros por fecha, **flujo neto** (`Ventas Brutas − Gastos de Caja`), ticket promedio, participación por medio de pago, rendimiento de la línea **🎉 Fiesta** y **Top 10 de productos** con **Chart.js**.
+* **Dashboard ejecutivo (`Reporte/Index`):** filtros dinámicos por fecha (**Hoy**, **7 Días**, **Mes**, **Año** y rango libre), **flujo neto** (`Ventas Brutas − Gastos de Caja`), ticket promedio, participación por medio de pago, rendimiento de la línea **🎉 Fiesta**, **Top 10 de productos** con **Chart.js** y **Ranking Top 10 de Clientes Frecuentes (VIP)**.
 
-### 🛡️ 4. Seguridad por Roles (RBAC)
+### 👥 4. Directorio de Clientes
+* **Gestión de cartera (`Cliente/Index`):** registro y edición de personas naturales (DNI/CE) y bodegas/empresas (RUC) con teléfono y dirección.
+* **Métricas por cliente:** visualización automática del total de tickets comprados y el monto histórico acumulado en soles (`S/`).
+
+### 🛡️ 5. Seguridad por Roles (RBAC) y Cifrado
+* **Contraseñas seguras:** almacenamiento mediante hash criptográfico unidireccional (`PasswordHasher` con *Salt* aleatorio) y migración/semilla automática en `DbInicializador`.
 * **Sesión:** cookies encriptadas con expiración de **8 horas** (una jornada laboral).
-* **Administrador:** BI ejecutivo, auditoría histórica, catálogo, inventario y usuarios (con protección **anti-autobloqueo** de la cuenta propia).
-* **Cajero:** solo POS, su turno activo y reimpresión. Las rutas administrativas se bloquean en la interfaz y en el servidor con `[Authorize(Roles = "Administrador")]`.
+* **Administrador:** BI ejecutivo, auditoría histórica, catálogo, inventario, clientes y usuarios (con protección **anti-autobloqueo** de la cuenta propia).
+* **Cajero:** operación de caja, punto de venta, directorio de clientes y reimpresión del turno activo. Las rutas administrativas críticas se bloquean en la interfaz y en el servidor con `[Authorize(Roles = "Administrador")]`.
 
 ---
 
 ## ⚠️ Alcance Actual
 
-* ✅ **Completado:** venta minorista y mayorista, cobro mixto con evidencia Yape, arqueo de caja, inventario, BI operativo y ejecutivo, seguridad por roles y reimpresión térmica.
+* ✅ **Completado:** venta minorista y mayorista, cobro mixto con evidencia Yape, directorio y registro rápido de clientes en POS, arqueo de caja, inventario, BI operativo y ejecutivo (productos, categorías y clientes VIP), seguridad con hash de contraseñas y reimpresión térmica.
 * ⚠️ **Tickets internos:** el sistema emite tickets con serie y correlativo propios (`T001-000001`) y desglose de Operaciones Gravadas e IGV (18%). **No son comprobantes electrónicos válidos ante SUNAT.**
 * 🔜 **Facturación electrónica:** el modelo de datos y el cálculo de IGV están preparados para integrar un OSE/PSE en la siguiente iteración. La integración aún no está implementada.
 
@@ -130,7 +139,7 @@ dotnet run
 
 | Capa | Tecnologías |
 | :--- | :--- |
-| **Backend** | C#, ASP.NET Core MVC (.NET 10), inyección de dependencias |
+| **Backend** | C#, ASP.NET Core MVC (.NET 10), inyección de dependencias, PasswordHasher |
 | **Datos** | SQL Server, Entity Framework Core (Code-First, Migrations, LINQ, transacciones explícitas) |
 | **Frontend** | Razor Views, Bootstrap 5, Bootstrap Icons, JavaScript ES6 modular |
 | **Visualización** | Chart.js |
@@ -143,7 +152,7 @@ POS_DENZELL/
 ├── DTOs/          # DashboardBiDTO, ResumenCajaDTO, TicketVentaDTO
 ├── Data/          # ApplicationDbContext, Fluent API y precisión decimal en SQL
 ├── Views/         # Vistas Razor modulares e interfaz de impresión térmica
-└── wwwroot/       # Scripts JS, estilos y almacenamiento de evidencias Yape
+└── wwwroot/       # Scripts JS (puntoVenta, clientes, reportes, productos, usuario), estilos, almacenamiento de evidencias Yape y fotos de Productos
 ```
 
 ---
