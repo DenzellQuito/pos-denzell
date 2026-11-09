@@ -97,7 +97,8 @@ namespace POS_DENZELL.Controllers
             [FromForm] string Yape,
             [FromForm] string CarritoJson,
             [FromForm] IFormFile? FotoYape,
-            [FromForm] string? NumeroOperacion)
+            [FromForm] string? NumeroOperacion,
+            [FromForm] int? IdCliente)
         {
             try
             {
@@ -108,7 +109,7 @@ namespace POS_DENZELL.Controllers
                 decimal valYape = ParsearDecimal(Yape);
 
                 int idVentaGenerada = await _ventaService.RegistrarVentaAsync(
-                    IdTurno, idUsuario, valEfectivo, valYape, CarritoJson, FotoYape, NumeroOperacion);
+                    IdTurno, idUsuario, valEfectivo, valYape, CarritoJson, FotoYape, NumeroOperacion, IdCliente);
 
                 return Ok(new { success = true, mensaje = "Venta registrada con éxito", idVenta = idVentaGenerada });
             }

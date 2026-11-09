@@ -1,0 +1,222 @@
+﻿@model IEnumerable<POS_DENZELL.DTOs.ClienteResumenDTO>
+@{
+    ViewData["Title"] = "Directorio de Clientes";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <div>
+        <h2 class="fw-bold text-dark mb-0"><i class="bi bi-person-vcard-fill text-primary"></i> Directorio de Clientes</h2>
+        <small class="text-muted">Historial de compras acumuladas, datos de contacto y registro de clientes frecuentes</small>
+    </div>
+    <button type="button" class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCrearCliente">
+        <i class="bi bi-person-plus-fill"></i> Nuevo Cliente
+    </button>
+</div>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert">
+        <i class="bi bi-check-circle-fill me-1"></i> @TempData["Exito"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Buscador instantáneo en memoria -->
+<div class="card shadow-sm border-0 mb-3" style="border-radius: 12px;">
+    <div class="card-body py-2 px-3">
+        <div class="input-group">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" id="buscadorClientes" class="form-control border-start-0" placeholder="Filtrar clientes por DNI, RUC, nombre o teléfono..." autocomplete="off" />
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0" style="border-radius: 12px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">DOCUMENTO</th>
+                        <th>CLIENTE / RAZÓN SOCIAL</th>
+                        <th>TELÉFONO</th>
+                        <th>DIRECCIÓN</th>
+                        <th class="text-center">COMPRAS</th>
+                        <th class="text-end">TOTAL ACUMULADO</th>
+                        <th class="text-center">ESTADO</th>
+                        <th class="text-end pe-4">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaClientesBody">
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-people fs-2 d-block mb-2"></i> Aún no hay clientes registrados.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var c in Model)
+                        {
+                            <tr class="fila-cliente @(!c.Activo ? "table-light text-muted" : "")"
+                                data-busqueda="@($"{c.NumeroDocumento} {c.NombreCompleto} {c.Telefono}".ToLower())">
+                                <td class="ps-4">
+                                    <span class="badge bg-secondary me-1">@c.TipoDocumento</span>
+                                    <code class="fw-bold text-dark">@c.NumeroDocumento</code>
+                                </td>
+                                <td class="fw-bold">@c.NombreCompleto</td>
+                                <td class="small text-muted">@(string.IsNullOrEmpty(c.Telefono) ? "---" : c.Telefono)</td>
+                                <td class="small text-muted text-truncate" style="max-width: 180px;">@(string.IsNullOrEmpty(c.Direccion) ? "---" : c.Direccion)</td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border">@c.TotalCompras ticket(s)</span>
+                                </td>
+                                <td class="text-end fw-bold text-success">S/ @c.TotalGastado.ToString("0.00")</td>
+                                <td class="text-center">
+                                    @if (c.Activo)
+                                    {
+                                        <span class="badge bg-success">Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Inactivo</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                                            onclick="abrirModalEditarCliente(@c.IdCliente, '@c.TipoDocumento', '@c.NumeroDocumento.Replace("'", "\\'")', '@c.NombreCompleto.Replace("'", "\\'")', '@(c.Telefono?.Replace("'", "\\'") ?? "")', '@(c.Direccion?.Replace("'", "\\'") ?? "")')">
+                                        <i class="bi bi-pencil-square"></i> Editar
+                                    </button>
+
+                                    @if (User.IsInRole("Administrador"))
+                                    {
+                                        <form asp-action="CambiarEstado" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@c.IdCliente" />
+                                            @if (c.Activo)
+                                            {
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Desactivar">
+                                                    <i class="bi bi-person-slash"></i>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Reactivar">
+                                                    <i class="bi bi-person-check"></i>
+                                                </button>
+                                            }
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 1: CREAR CLIENTE -->
+<div class="modal fade" id="modalCrearCliente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-person-plus-fill"></i> Registrar Cliente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Crear" method="post">
+                <div class="modal-body p-4">
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <label class="form-label fw-bold">Tipo Doc.</label>
+                            <select name="TipoDocumento" class="form-select">
+                                <option value="DNI" selected>DNI</option>
+                                <option value="RUC">RUC</option>
+                                <option value="CE">CE</option>
+                            </select>
+                        </div>
+                        <div class="col-8">
+                            <label class="form-label fw-bold">N° de Documento *</label>
+                            <input type="text" name="NumeroDocumento" class="form-control" placeholder="Ej: 71234567 o 20123456789" required maxlength="20" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nombre Completo o Razón Social *</label>
+                        <input type="text" name="NombreCompleto" class="form-control" placeholder="Ej: Bodega San Martín S.A.C." required maxlength="150" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Teléfono / Celular <small class="text-muted fw-normal">(Opcional)</small></label>
+                        <input type="text" name="Telefono" class="form-control" placeholder="Ej: 987654321" maxlength="20" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Dirección <small class="text-muted fw-normal">(Opcional)</small></label>
+                        <input type="text" name="Direccion" class="form-control" placeholder="Ej: Jr. Lima 450" maxlength="200" />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Guardar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 2: EDITAR CLIENTE -->
+<div class="modal fade" id="modalEditarCliente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Editar Cliente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Editar" method="post">
+                <input type="hidden" name="IdCliente" id="editIdCliente" />
+                <div class="modal-body p-4">
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <label class="form-label fw-bold">Tipo Doc.</label>
+                            <select name="TipoDocumento" id="editTipoDocumento" class="form-select">
+                                <option value="DNI">DNI</option>
+                                <option value="RUC">RUC</option>
+                                <option value="CE">CE</option>
+                            </select>
+                        </div>
+                        <div class="col-8">
+                            <label class="form-label fw-bold">N° de Documento *</label>
+                            <input type="text" name="NumeroDocumento" id="editNumeroDocumento" class="form-control" required maxlength="20" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nombre Completo o Razón Social *</label>
+                        <input type="text" name="NombreCompleto" id="editNombreCompleto" class="form-control" required maxlength="150" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Teléfono / Celular</label>
+                        <input type="text" name="Telefono" id="editTelefono" class="form-control" maxlength="20" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Dirección</label>
+                        <input type="text" name="Direccion" id="editDireccion" class="form-control" maxlength="200" />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-dark fw-bold px-4">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/clientes.js" asp-append-version="true"></script>
+}

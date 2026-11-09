@@ -45,14 +45,22 @@
             <div><span class="bold">FECHA:</span> @Model.FechaHora.ToString("dd/MM/yyyy HH:mm")</div>
             <div><span class="bold">CAJERO:</span> @Model.NombreCajero</div>
             
-            <!-- SI EXISTE UN CLIENTE, LO IMPRIMIMOS -->
-            @if (!string.IsNullOrEmpty(Model.ClienteDocumento))
-            {
-                <div style="margin-top: 5px;">
+            <!-- DATOS DEL CLIENTE EN EL TICKET -->
+            <div style="margin-top: 5px;">
+                @if (!string.IsNullOrEmpty(Model.ClienteDocumento))
+                {
                     <div><span class="bold">DNI/RUC:</span> @Model.ClienteDocumento</div>
                     <div><span class="bold">CLIENTE:</span> @Model.ClienteNombre</div>
-                </div>
-            }
+                    @if (!string.IsNullOrEmpty(Model.ClienteDireccion))
+                    {
+                        <div><span class="bold">DIRECCIÓN:</span> @Model.ClienteDireccion</div>
+                    }
+                }
+                else
+                {
+                    <div><span class="bold">CLIENTE:</span> Clientes varios</div>
+                }
+            </div>
         </div>
 
         <div class="divider"></div>

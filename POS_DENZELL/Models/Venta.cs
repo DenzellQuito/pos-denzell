@@ -44,15 +44,18 @@ namespace POS_DENZELL.Models
 
         public ICollection<VentaDetalle> Detalles { get; set; } = new List<VentaDetalle>();
 
-        
-        public string? ClienteDocumento { get; set; } 
-        public string? ClienteNombre { get; set; } 
+        // Vinculación opcional 
+        public int? IdCliente { get; set; }
 
-        
+        [ForeignKey("IdCliente")]
+        public Cliente? Cliente { get; set; }
+
+        public string? ClienteDocumento { get; set; } // DNI o RUC
+        public string? ClienteNombre { get; set; } // Nombre o Razón Social
+
         [Column(TypeName = "decimal(10,2)")]
         public decimal TotalIGV { get; set; } 
 
-        
         public string? MensajeSunat { get; set; } // Para guardar errores 
     }
 }

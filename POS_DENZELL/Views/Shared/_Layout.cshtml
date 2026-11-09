@@ -74,6 +74,11 @@
                                     <i class="bi bi-people"></i> Usuarios
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link @Activo("Cliente")" asp-controller="Cliente" asp-action="Index">
+                                    <i class="bi bi-person-vcard"></i> Clientes
+                                </a>
+                            </li>
                         }
                     </ul>
 
@@ -82,7 +87,7 @@
                         <a class="btn btn-brand btn-sm" asp-controller="Caja" asp-action="PuntoDeVenta">
                             <i class="bi bi-cart-check"></i> Vender
                         </a>
-
+                        
                         @if (User.Identity!.IsAuthenticated)
                         {
                             <div class="dropdown">

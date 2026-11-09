@@ -18,9 +18,9 @@
             public decimal PagoYape { get; set; }
             public decimal Vuelto { get; set; }
             public List<TicketDetalleDTO> Detalles { get; set; } = new List<TicketDetalleDTO>();
-
             public string? ClienteDocumento { get; set; }
             public string? ClienteNombre { get; set; }
+            public string? ClienteDireccion { get; set; }
             public decimal TotalIGV { get; set; }
             public string NumeroComprobante { get; set; } = "";
     }

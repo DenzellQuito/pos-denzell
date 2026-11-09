@@ -38,6 +38,14 @@
         public List<VentaPorCategoriaDTO> VentasPorCategoria { get; set; } = new();
         public List<VentaPorFechaDTO> EvolucionVentas { get; set; } = new();
         public List<ProductoTopDTO> TopProductos { get; set; } = new();
+        //CLIENTES
+        public decimal VentasClientesIdentificados { get; set; }
+        public int TicketsClientesIdentificados { get; set; }
+        public decimal PorcentajeVentasIdentificadas => TotalVentasBrutas > 0
+            ? Math.Round((VentasClientesIdentificados / TotalVentasBrutas) * 100, 1, MidpointRounding.AwayFromZero)
+            : 0m;
+
+        public List<ClienteTopBiDTO> TopClientes { get; set; } = new();
     }
 
     public class VentaPorCategoriaDTO
@@ -61,5 +69,15 @@
         public bool EsFiesta { get; set; }
         public int CantidadVendida { get; set; }
         public decimal TotalGenerado { get; set; }
+    }
+    public class ClienteTopBiDTO
+    {
+        public string Documento { get; set; } = string.Empty;
+        public string NombreCompleto { get; set; } = string.Empty;
+        public int CantidadCompras { get; set; }
+        public decimal TotalComprado { get; set; }
+        public decimal TicketPromedio => CantidadCompras > 0
+            ? Math.Round(TotalComprado / CantidadCompras, 2, MidpointRounding.AwayFromZero)
+            : 0m;
     }
 }

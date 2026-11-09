@@ -11,7 +11,7 @@ namespace POS_DENZELL.Services
     // Definimos el Contrato (Interfaz)
     public interface IVentaService
     {
-        Task<int> RegistrarVentaAsync(int idTurno, int idUsuario, decimal efectivo, decimal yape, string carritoJson, IFormFile? fotoYape, string? numeroOperacion);
+        Task<int> RegistrarVentaAsync(int idTurno, int idUsuario, decimal efectivo, decimal yape, string carritoJson, IFormFile? fotoYape, string? numeroOperacion, int? idCliente = null);
         Task<TicketVentaDTO> ObtenerTicketVentaAsync(int idVenta);
     }
 
@@ -27,7 +27,7 @@ namespace POS_DENZELL.Services
             _env = env;
         }
 
-        public async Task<int> RegistrarVentaAsync(int idTurno, int idUsuario, decimal efectivo, decimal yape, string carritoJson, IFormFile? fotoYape, string? numeroOperacion)
+        public async Task<int> RegistrarVentaAsync(int idTurno, int idUsuario, decimal efectivo, decimal yape, string carritoJson, IFormFile? fotoYape, string? numeroOperacion, int? idCliente = null)
         {
             // Validar Carrito
             var carrito = JsonSerializer.Deserialize<List<CarritoItemDTO>>(carritoJson);
@@ -91,7 +91,11 @@ namespace POS_DENZELL.Services
                     .MaxAsync(v => (int?)v.Correlativo) ?? 0;
 
                 int nuevoCorrelativo = ultimoCorrelativo + 1;
-
+                Cliente? cliente = null;
+                if (idCliente.HasValue && idCliente.Value > 0)
+                {
+                    cliente = await _context.Clientes.FindAsync(idCliente.Value);
+                }
                 var nuevaVenta = new Venta
                 {
                     IdTurno = idTurno,
@@ -108,7 +112,9 @@ namespace POS_DENZELL.Services
                     Vuelto = vuelto,
                     RutaFotoComprobante = rutaFoto,
                     NumeroOperacion = string.IsNullOrWhiteSpace(numeroOperacion) ? null : numeroOperacion.Trim(),
-                    
+                    IdCliente = cliente?.IdCliente,
+                    ClienteDocumento = cliente?.NumeroDocumento,
+                    ClienteNombre = cliente?.NombreCompleto
                 };
 
                 _context.Ventas.Add(nuevaVenta);
@@ -157,6 +163,13 @@ namespace POS_DENZELL.Services
 
             var cajero = await _context.Usuarios.FindAsync(venta.IdUsuario);
 
+            string? direccionCliente = null;
+            if (venta.IdCliente.HasValue)
+            {
+                var cliente = await _context.Clientes.FindAsync(venta.IdCliente.Value);
+                direccionCliente = cliente?.Direccion;
+            }
+
             var detalles = await (from d in _context.VentaDetalles
                                   join p in _context.Productos on d.IdProducto equals p.IdProducto
                                   where d.IdVenta == idVenta
@@ -180,6 +193,7 @@ namespace POS_DENZELL.Services
                 TotalIGV = venta.TotalIGV,
                 ClienteDocumento = venta.ClienteDocumento,
                 ClienteNombre = venta.ClienteNombre,
+                ClienteDireccion = direccionCliente,
                 Detalles = detalles,
                 NumeroComprobante = $"{venta.Serie}-{venta.Correlativo:D6}"
             };

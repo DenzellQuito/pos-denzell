@@ -18,7 +18,7 @@ namespace POS_DENZELL.Data
         public DbSet<VentaDetalle> VentaDetalles { get; set; }
         public DbSet<TurnoCaja> TurnosCaja { get; set; }
         public DbSet<MovimientoCaja> MovimientosCaja { get; set; }
-
+        public DbSet<Cliente> Clientes { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
 
        

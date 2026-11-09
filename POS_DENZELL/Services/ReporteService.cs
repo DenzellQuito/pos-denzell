@@ -115,6 +115,26 @@ namespace POS_DENZELL.Services
                         TotalVendido = g.Sum(v => v.MontoTotal)
                     }).ToList();
             }
+            //CLIENTES
+            // Calcular Top 10 Clientes que más compraron en el periodo
+            var ventasConCliente = ventas.Where(v => v.IdCliente.HasValue || !string.IsNullOrEmpty(v.ClienteDocumento)).ToList();
+
+            var topClientes = ventasConCliente
+                .GroupBy(v => new
+                {
+                    Doc = string.IsNullOrEmpty(v.ClienteDocumento) ? "S/D" : v.ClienteDocumento,
+                    Nom = string.IsNullOrEmpty(v.ClienteNombre) ? "Cliente Identificado" : v.ClienteNombre
+                })
+                .Select(g => new ClienteTopBiDTO
+                {
+                    Documento = g.Key.Doc,
+                    NombreCompleto = g.Key.Nom,
+                    CantidadCompras = g.Count(),
+                    TotalComprado = g.Sum(x => x.MontoTotal)
+                })
+                .OrderByDescending(c => c.TotalComprado)
+                .Take(10)
+                .ToList();
 
             // Empaquetar todo en el DTO maestro
             return new DashboardBiDTO
@@ -131,7 +151,10 @@ namespace POS_DENZELL.Services
                 UnidadesVendidasFiesta = detalles.Where(d => d.EsFiesta).Sum(d => d.Cantidad),
                 VentasPorCategoria = porCategoria,
                 EvolucionVentas = evolucion,
-                TopProductos = topProductos
+                TopProductos = topProductos,
+                VentasClientesIdentificados = ventasConCliente.Sum(v => v.MontoTotal),
+                TicketsClientesIdentificados = ventasConCliente.Count,
+                TopClientes = topClientes
             };
         }
     }

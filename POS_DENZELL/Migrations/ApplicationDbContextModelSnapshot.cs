@@ -43,6 +43,48 @@ namespace POS_DENZELL.Migrations
                     b.ToTable("Categorias");
                 });
 
+            modelBuilder.Entity("POS_DENZELL.Models.Cliente", b =>
+                {
+                    b.Property<int>("IdCliente")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdCliente"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Direccion")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("FechaRegistro")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NombreCompleto")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("NumeroDocumento")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("TipoDocumento")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
+                    b.HasKey("IdCliente");
+
+                    b.ToTable("Clientes");
+                });
+
             modelBuilder.Entity("POS_DENZELL.Models.MovimientoCaja", b =>
                 {
                     b.Property<int>("IdMovimiento")
@@ -214,6 +256,9 @@ namespace POS_DENZELL.Migrations
                     b.Property<DateTime>("FechaHora")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("IdCliente")
+                        .HasColumnType("int");
+
                     b.Property<int>("IdTurno")
                         .HasColumnType("int");
 
@@ -253,6 +298,8 @@ namespace POS_DENZELL.Migrations
                         .HasColumnType("decimal(10,2)");
 
                     b.HasKey("IdVenta");
+
+                    b.HasIndex("IdCliente");
 
                     b.HasIndex("IdTurno");
 
@@ -327,6 +374,10 @@ namespace POS_DENZELL.Migrations
 
             modelBuilder.Entity("POS_DENZELL.Models.Venta", b =>
                 {
+                    b.HasOne("POS_DENZELL.Models.Cliente", "Cliente")
+                        .WithMany("Compras")
+                        .HasForeignKey("IdCliente");
+
                     b.HasOne("POS_DENZELL.Models.TurnoCaja", "Turno")
                         .WithMany("VentasDelTurno")
                         .HasForeignKey("IdTurno")
@@ -338,6 +389,8 @@ namespace POS_DENZELL.Migrations
                         .HasForeignKey("IdUsuario")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Cliente");
 
                     b.Navigation("Turno");
 
@@ -366,6 +419,11 @@ namespace POS_DENZELL.Migrations
             modelBuilder.Entity("POS_DENZELL.Models.Categoria", b =>
                 {
                     b.Navigation("Productos");
+                });
+
+            modelBuilder.Entity("POS_DENZELL.Models.Cliente", b =>
+                {
+                    b.Navigation("Compras");
                 });
 
             modelBuilder.Entity("POS_DENZELL.Models.TurnoCaja", b =>

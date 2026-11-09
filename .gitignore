@@ -485,5 +485,9 @@ $RECYCLE.BIN/
 **/fotos_yape/*
 !**/fotos_yape/.gitkeep
 
+# Imágenes dinámicas del catálogo de productos
+**/wwwroot/images/productos/*
+!**/wwwroot/images/productos/.gitkeep
+
 # Respaldos de base de datos
 *.bak

@@ -241,13 +241,11 @@ document.addEventListener('keydown', function (e) {
     }
 });
 
-// LÓGICA DEL MODAL DE COBRO (PAGO MIXTO)
-
+// LÓGICA DEL MODAL DE COBRO (PAGO MIXTO + CLIENTE)
 
 let modalBootstrapCobro = null;
 let totalActualVenta = 0;
 
-// Abre la ventana y la prepara
 function abrirModalCobro() {
     totalActualVenta = carrito.reduce((sum, item) => {
         const subtotalFila = redondearSoles(item.precio * item.cantidad);
@@ -258,7 +256,11 @@ function abrirModalCobro() {
 
     document.getElementById('inputEfectivo').value = '';
     document.getElementById('inputYape').value = '';
+    document.getElementById('inputNumeroOperacion').value = '';
     document.getElementById('inputFotoYape').value = '';
+
+    // Reiniciamos el cliente a "Público General" al abrir el modal
+    limpiarClienteSeleccionado();
 
     calcularVuelto();
 
@@ -270,14 +272,11 @@ function abrirModalCobro() {
     setTimeout(() => { document.getElementById('inputEfectivo').focus(); }, 500);
 }
 
-// Calcula el vuelto o cuánto dinero falta en tiempo real
 function calcularVuelto() {
     let efectivo = parseFloat(document.getElementById('inputEfectivo').value) || 0;
     let yape = parseFloat(document.getElementById('inputYape').value) || 0;
 
     let pagoTotal = efectivo + yape;
-
-    //Redondeamos la diferencia a 2 decimales para eliminar la "basura" de JavaScript
     let diferencia = Math.round((pagoTotal - totalActualVenta) * 100) / 100;
 
     const cajaVuelto = document.getElementById('cajaVuelto');
@@ -286,7 +285,6 @@ function calcularVuelto() {
     const btnConfirmar = document.getElementById('btnConfirmarVenta');
 
     if (diferencia < 0) {
-        // Falta dinero
         cajaVuelto.className = 'alert alert-secondary d-flex justify-content-between align-items-center mb-0 border-0 shadow-sm';
         lblTexto.innerText = 'Falta:';
         modalVuelto.className = 'fs-3 fw-bold text-danger';
@@ -309,16 +307,19 @@ function procesarVentaEnServidor() {
     btnConfirmar.disabled = true;
     btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
 
-    // Usamos FormData porque necesitamos enviar la Foto del Yape (archivo binario)
     const formData = new FormData();
     formData.append('IdTurno', document.getElementById('IdTurnoActual').value);
     formData.append('Efectivo', document.getElementById('inputEfectivo').value || 0);
     formData.append('Yape', document.getElementById('inputYape').value || 0);
     formData.append('CarritoJson', JSON.stringify(carrito));
-    // Capturamos el número de operación de Yape ---
     formData.append('NumeroOperacion', document.getElementById('inputNumeroOperacion').value);
 
-    // Si el cajero seleccionó una foto, la adjuntamos al paquete
+    // Si hay un cliente seleccionado, enviamos su IdCliente
+    const idCliente = document.getElementById('idClienteSeleccionado').value;
+    if (idCliente) {
+        formData.append('IdCliente', idCliente);
+    }
+
     const fotoInput = document.getElementById('inputFotoYape');
     if (fotoInput.files.length > 0) {
         formData.append('FotoYape', fotoInput.files[0]);
@@ -332,17 +333,12 @@ function procesarVentaEnServidor() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                
                 carrito = [];
                 actualizarBoletaHTML();
-
-                
                 modalBootstrapCobro.hide();
 
-                
                 alert("¡Venta #" + data.idVenta + " registrada con éxito!");
 
-                const btnConfirmar = document.getElementById('btnConfirmarVenta');
                 btnConfirmar.disabled = false;
                 btnConfirmar.innerHTML = 'Confirmar Cobro';
 
@@ -367,12 +363,132 @@ function procesarVentaEnServidor() {
 function llenarMontoExacto(metodo) {
     if (metodo === 'efectivo') {
         document.getElementById('inputEfectivo').value = totalActualVenta.toFixed(2);
-        document.getElementById('inputYape').value = ''; // Limpiamos el otro por si acaso
+        document.getElementById('inputYape').value = '';
     } else if (metodo === 'yape') {
         document.getElementById('inputYape').value = totalActualVenta.toFixed(2);
-        document.getElementById('inputEfectivo').value = ''; // Limpiamos el otro por si acaso
+        document.getElementById('inputEfectivo').value = '';
     }
-    
-    // Forzamos el recálculo para que el botón verde de "Confirmar Cobro" se encienda
     calcularVuelto();
+}
+
+// ==========================================================
+// BUSCADOR Y REGISTRO RÁPIDO DE CLIENTE EN MODAL DE COBRO
+// ==========================================================
+
+const inputBuscarClientePos = document.getElementById('inputBuscarClientePos');
+const listaResultadosCliente = document.getElementById('listaResultadosCliente');
+
+if (inputBuscarClientePos) {
+    inputBuscarClientePos.addEventListener('input', function () {
+        const termino = this.value.trim();
+        if (termino.length < 2) {
+            listaResultadosCliente.classList.add('d-none');
+            listaResultadosCliente.innerHTML = '';
+            return;
+        }
+
+        fetch(`/Cliente/BuscarPos?termino=${encodeURIComponent(termino)}`)
+            .then(r => r.json())
+            .then(clientes => {
+                listaResultadosCliente.innerHTML = '';
+                if (clientes.length === 0) {
+                    listaResultadosCliente.innerHTML = `
+                        <div class="list-group-item small text-muted text-center py-2">
+                            No encontrado. Usa el botón <b>+ Nuevo</b> para registrarlo.
+                        </div>`;
+                } else {
+                    clientes.forEach(c => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'list-group-item list-group-item-action py-1 px-2 small d-flex justify-content-between align-items-center';
+                        btn.innerHTML = `
+                            <span class="fw-bold text-dark text-truncate">${c.nombreCompleto}</span>
+                            <span class="badge bg-secondary ms-2">${c.tipoDocumento}: ${c.numeroDocumento}</span>
+                        `;
+                        btn.onclick = () => seleccionarClientePos(c.idCliente, `${c.tipoDocumento}: ${c.numeroDocumento}`, c.nombreCompleto);
+                        listaResultadosCliente.appendChild(btn);
+                    });
+                }
+                listaResultadosCliente.classList.remove('d-none');
+            });
+    });
+}
+
+function seleccionarClientePos(idCliente, documento, nombre) {
+    document.getElementById('idClienteSeleccionado').value = idCliente;
+
+    const badge = document.getElementById('badgeClienteActual');
+    badge.className = 'badge bg-success';
+    badge.innerText = `✓ ${nombre} (${documento})`;
+
+    document.getElementById('inputBuscarClientePos').value = '';
+    document.getElementById('listaResultadosCliente').classList.add('d-none');
+    document.getElementById('panelNuevoClienteRapido').classList.add('d-none');
+    document.getElementById('btnQuitarCliente').classList.remove('d-none');
+}
+
+function limpiarClienteSeleccionado() {
+    document.getElementById('idClienteSeleccionado').value = '';
+
+    const badge = document.getElementById('badgeClienteActual');
+    badge.className = 'badge bg-secondary';
+    badge.innerText = '👤 Público General';
+
+    document.getElementById('inputBuscarClientePos').value = '';
+    document.getElementById('listaResultadosCliente').classList.add('d-none');
+    document.getElementById('panelNuevoClienteRapido').classList.add('d-none');
+    document.getElementById('btnQuitarCliente').classList.add('d-none');
+}
+
+function toggleNuevoClienteRapido() {
+    const panel = document.getElementById('panelNuevoClienteRapido');
+    panel.classList.toggle('d-none');
+    document.getElementById('listaResultadosCliente').classList.add('d-none');
+
+    if (!panel.classList.contains('d-none')) {
+        // Si ya había escrito un DNI en el buscador, lo copiamos directo al formulario rápido
+        const textoBuscado = document.getElementById('inputBuscarClientePos').value.trim();
+        if (/^\d+$/.test(textoBuscado)) {
+            document.getElementById('rapidoNumeroDoc').value = textoBuscado;
+            document.getElementById('rapidoTipoDoc').value = textoBuscado.length === 11 ? 'RUC' : 'DNI';
+        }
+        document.getElementById('rapidoNumeroDoc').focus();
+    }
+}
+
+function guardarClienteRapidoPos() {
+    const tipoDoc = document.getElementById('rapidoTipoDoc').value;
+    const numeroDoc = document.getElementById('rapidoNumeroDoc').value.trim();
+    const nombre = document.getElementById('rapidoNombre').value.trim();
+    const telefono = document.getElementById('rapidoTelefono').value.trim();
+    const direccion = document.getElementById('rapidoDireccion').value.trim();
+
+    if (!numeroDoc || !nombre) {
+        alert("Ingresa el número de documento y el nombre del cliente.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('tipoDoc', tipoDoc);
+    formData.append('numeroDoc', numeroDoc);
+    formData.append('nombre', nombre);
+    formData.append('telefono', telefono);
+    formData.append('direccion', direccion);
+
+    fetch('/Cliente/CrearRapidoPos', {
+        method: 'POST',
+        body: formData
+    })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                document.getElementById('rapidoNumeroDoc').value = '';
+                document.getElementById('rapidoNombre').value = '';
+                document.getElementById('rapidoTelefono').value = '';
+                document.getElementById('rapidoDireccion').value = '';
+                seleccionarClientePos(res.idCliente, res.documento, res.nombre);
+            } else {
+                alert(res.mensaje);
+            }
+        });
 }

@@ -247,6 +247,63 @@
             </div>
         </div>
     </div>
+    <!-- FILA 4: FIDELIZACIÓN Y RANKING DE MEJORES CLIENTES (VIP) -->
+    <div class="row g-3 mt-1">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-radius: 12px 12px 0 0;">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-award-fill text-warning me-1"></i> Top Clientes Frecuentes del Periodo (Clientes Identificados)
+                    </h6>
+                    <span class="badge bg-light text-dark">
+                        Compras Identificadas: S/ @Model.VentasClientesIdentificados.ToString("0.00") (@Model.PorcentajeVentasIdentificadas% del total en @Model.TicketsClientesIdentificados tickets)
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">#</th>
+                                    <th>DOCUMENTO</th>
+                                    <th>CLIENTE / BODEGA</th>
+                                    <th class="text-center">VISITAS (TICKETS)</th>
+                                    <th class="text-end">TICKET PROMEDIO</th>
+                                    <th class="text-end pe-4">TOTAL COMPRADO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.TopClientes.Any())
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">
+                                            No hay ventas vinculadas a clientes específicos en este rango de fechas (todas fueron a Público General).
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    int posCliente = 1;
+                                    foreach (var cli in Model.TopClientes)
+                                    {
+                                        <tr>
+                                            <td class="ps-4 fw-bold text-secondary">@posCliente</td>
+                                            <td><code>@cli.Documento</code></td>
+                                            <td class="fw-bold text-dark">@cli.NombreCompleto</td>
+                                            <td class="text-center"><span class="badge bg-secondary">@cli.CantidadCompras</span></td>
+                                            <td class="text-end text-muted">S/ @cli.TicketPromedio.ToString("0.00")</td>
+                                            <td class="text-end pe-4 fw-bold text-success">S/ @cli.TotalComprado.ToString("0.00")</td>
+                                        </tr>
+                                        posCliente++;
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
