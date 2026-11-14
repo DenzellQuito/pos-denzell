@@ -52,7 +52,7 @@ namespace POS_DENZELL.Services
             if (fotoYape != null && fotoYape.Length > 0)
             {
                 var extension = Path.GetExtension(fotoYape.FileName).ToLowerInvariant();
-                var extensionesPermitidas = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                var extensionesPermitidas = new[] { ".jpg", ".jpeg", ".png", ".webp", ".heic" };
 
                 if (!extensionesPermitidas.Contains(extension))
                 {

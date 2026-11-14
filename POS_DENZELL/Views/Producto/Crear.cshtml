@@ -24,13 +24,23 @@
                         <!-- Columna Izquierda: Datos de texto -->
                         <div class="col-md-8">
 
-                            <div class="mb-3">
-                                <label class="form-label fw-bold text-secondary">Código de Barras</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
-                                    <input type="text" asp-for="CodigoBarras" class="form-control" placeholder="Ej: 7751234..." required autofocus>
+                                <!-- CAMPO CÓDIGO DE BARRAS CON BOTÓN DE ESCÁNER -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Código de Barras *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="bi bi-upc"></i></span>
+                                        <input type="text" name="CodigoBarras" id="inputCodigoBarrasCrear" class="form-control" placeholder="Escanea o escribe el código..." required maxlength="50" autocomplete="off" />
+                                        <button type="button" class="btn btn-dark fw-bold" id="btnCamaraCrearProd" onclick="toggleScannerInventario('inputCodigoBarrasCrear', 'contenedorScannerCrear', 'readerInventarioCrear', 'btnCamaraCrearProd')">
+                                            <i class="bi bi-camera-fill me-1"></i> Escanear
+                                        </button>
+                                    </div>
+
+                                    <!-- Visor desplegable dentro del modal -->
+                                    <div id="contenedorScannerCrear" class="border rounded mt-2 p-2 bg-black text-center d-none">
+                                        <div id="readerInventarioCrear" style="width: 100%; max-width: 340px; margin: 0 auto;"></div>
+                                        <small class="text-white-50 d-block mt-1">Acerca el código de barras de la envoltura...</small>
+                                    </div>
                                 </div>
-                            </div>
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-secondary">Descripción (Nombre del Producto)</label>
@@ -114,4 +124,6 @@
             }
         }
     </script>
+        <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+        <script src="~/js/productos.js" asp-append-version="true"></script>
 }

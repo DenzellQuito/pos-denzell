@@ -12,12 +12,14 @@ namespace POS_DENZELL.Controllers
         private readonly IProductoService _productoService;
         private readonly IVentaService _ventaService;
         private readonly ICajaService _cajaService;
+        private readonly IOcrService _ocrService;
 
-        public CajaController(IProductoService productoService, IVentaService ventaService, ICajaService cajaService)
+        public CajaController(IProductoService productoService, IVentaService ventaService, ICajaService cajaService, IOcrService ocrService)
         {
             _productoService = productoService;
             _ventaService = ventaService;
             _cajaService = cajaService;
+            _ocrService = ocrService;
         }
 
         // EVITA ERRORES DE FORMATO AL PARSEAR DECIMALES 
@@ -213,6 +215,13 @@ namespace POS_DENZELL.Controllers
             {
                 return RedirectToAction("Index", "Home");
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AnalizarYapeOcr([FromForm] IFormFile fotoYape)
+        {
+            var resultado = await _ocrService.ExtraerDatosYapeAsync(fotoYape);
+            return Json(resultado);
         }
 
     }

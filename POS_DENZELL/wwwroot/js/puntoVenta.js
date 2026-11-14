@@ -492,3 +492,215 @@ function guardarClienteRapidoPos() {
             }
         });
 }
+
+// ==========================================================
+// ESCÁNER DE CÓDIGO DE BARRAS CON CÁMARA (HTML5-QRCODE)
+// ==========================================================
+
+let html5QrCodeScanner = null;
+let escaneandoActivo = false;
+let ultimoCodigoLeido = '';
+let ultimoTiempoEscaneo = 0;
+
+// Sonido "Bip" de lector láser generado por navegador (sin archivos externos)
+function reproducirBeepExito() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, ctx.currentTime); // Tono agudo de escáner
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.12);
+    } catch (e) {
+        console.log("Audio no disponible:", e);
+    }
+}
+
+function toggleEscaneoCamara() {
+    if (escaneandoActivo) {
+        detenerEscaneoCamara();
+    } else {
+        iniciarEscaneoCamara();
+    }
+}
+
+function iniciarEscaneoCamara() {
+    const contenedor = document.getElementById('contenedorCamaraScanner');
+    const btn = document.getElementById('btnToggleCamara');
+    const lblEstado = document.getElementById('lblEstadoEscaneo');
+
+    contenedor.classList.remove('d-none');
+    btn.classList.replace('btn-dark', 'btn-danger');
+    btn.innerHTML = '<i class="bi bi-stop-circle me-1"></i> Detener';
+    lblEstado.className = 'fw-bold text-muted';
+    lblEstado.innerText = 'Iniciando cámara...';
+
+    if (!html5QrCodeScanner) {
+        html5QrCodeScanner = new Html5Qrcode("readerCodigoBarras");
+    }
+
+    const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 110 }, // Rectángulo horizontal ideal para códigos de barras
+        aspectRatio: 1.777
+    };
+
+    // Preferimos la cámara trasera ("environment") en tablets y celulares
+    html5QrCodeScanner.start(
+        { facingMode: "environment" },
+        config,
+        onCodigoBarrasDetectado,
+        () => { /* Ignorar fotogramas sin código */ }
+    ).then(() => {
+        escaneandoActivo = true;
+        lblEstado.innerText = 'Cámara activa: acerca el código de barras...';
+    }).catch(err => {
+        console.error("Error al abrir cámara:", err);
+        lblEstado.className = 'fw-bold text-danger';
+        lblEstado.innerText = 'No se pudo acceder a la cámara. Verifica permisos o HTTPS.';
+    });
+}
+
+function detenerEscaneoCamara() {
+    const contenedor = document.getElementById('contenedorCamaraScanner');
+    const btn = document.getElementById('btnToggleCamara');
+
+    if (html5QrCodeScanner && escaneandoActivo) {
+        html5QrCodeScanner.stop().then(() => {
+            escaneandoActivo = false;
+            contenedor.classList.add('d-none');
+            btn.classList.replace('btn-danger', 'btn-dark');
+            btn.innerHTML = '<i class="bi bi-upc-scan me-1"></i> Escanear';
+        }).catch(err => console.error(err));
+    } else {
+        contenedor.classList.add('d-none');
+        btn.classList.replace('btn-danger', 'btn-dark');
+        btn.innerHTML = '<i class="bi bi-upc-scan me-1"></i> Escanear';
+    }
+}
+
+function onCodigoBarrasDetectado(codigoTexto) {
+    const ahora = Date.now();
+    const codigoLimpio = codigoTexto.trim();
+
+    // Cooldown de 1.5 segundos para el mismo código (evita agregar 10 unidades por accidente)
+    if (codigoLimpio === ultimoCodigoLeido && (ahora - ultimoTiempoEscaneo) < 1500) {
+        return;
+    }
+
+    ultimoCodigoLeido = codigoLimpio;
+    ultimoTiempoEscaneo = ahora;
+
+    buscarYAgregarPorCodigoBarras(codigoLimpio);
+}
+
+function buscarYAgregarPorCodigoBarras(codigo) {
+    const lblEstado = document.getElementById('lblEstadoEscaneo');
+
+    // Buscamos la tarjeta del producto en el DOM usando su atributo data-codigo
+    const itemProducto = document.querySelector(`.item-producto[data-codigo="${codigo}"]`);
+
+    if (itemProducto) {
+        const card = itemProducto.querySelector('.producto-card');
+        const nombreProd = itemProducto.querySelector('.card-title')?.innerText || codigo;
+
+        if (card) {
+            reproducirBeepExito();
+            card.click(); // Dispara agregarAlCarrito(...) con todos sus datos exactos
+
+            if (lblEstado) {
+                lblEstado.className = 'fw-bold text-success';
+                lblEstado.innerText = `✓ Agregado al carrito: ${nombreProd} (${codigo})`;
+            }
+        }
+    } else {
+        if (lblEstado) {
+            lblEstado.className = 'fw-bold text-danger';
+            lblEstado.innerText = `⚠ Código ${codigo} no registrado en inventario.`;
+        }
+    }
+}
+
+// Bonus: Si escriben el código exacto en el buscador y presionan Enter, también lo agrega directo al carrito
+if (buscadorProd) {
+    buscadorProd.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            const texto = this.value.trim();
+            const itemExacto = document.querySelector(`.item-producto[data-codigo="${texto}"]`);
+            if (itemExacto) {
+                e.preventDefault();
+                buscarYAgregarPorCodigoBarras(texto);
+                this.value = '';
+                textoBusqueda = '';
+                ejecutarFiltro();
+            }
+        }
+    });
+}
+
+// ==========================================================
+// LECTURA AUTOMÁTICA DE COMPROBANTE YAPE CON OCR (SERVIDOR)
+// ==========================================================
+
+function analizarFotoYapeConOcr(inputElement) {
+    if (!inputElement.files || inputElement.files.length === 0) return;
+
+    const archivo = inputElement.files[0];
+    const badgeEstado = document.getElementById('estadoOcrYape');
+    const inputYape = document.getElementById('inputYape');
+    const inputOp = document.getElementById('inputNumeroOperacion');
+
+    if (badgeEstado) {
+        badgeEstado.className = 'badge bg-warning text-dark';
+        badgeEstado.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width: 10px; height: 10px;"></span> Leyendo Yape...';
+        badgeEstado.classList.remove('d-none');
+    }
+
+    const formData = new FormData();
+    formData.append('fotoYape', archivo);
+
+    fetch('/Caja/AnalizarYapeOcr', {
+        method: 'POST',
+        body: formData
+    })
+        .then(r => r.json())
+        .then(res => {
+            if (res.exito) {
+                // 1. Si detectó el monto depositado en el Yape, lo escribe y recalcula el vuelto/faltante
+                if (res.monto !== null && res.monto !== undefined) {
+                    inputYape.value = parseFloat(res.monto).toFixed(2);
+                    inputYape.classList.add('bg-success-subtle', 'fw-bold');
+                    setTimeout(() => inputYape.classList.remove('bg-success-subtle'), 2000);
+                    calcularVuelto();
+                }
+
+                // 2. Si detectó el N° de operación (ej. 24905831), lo escribe automáticamente
+                if (res.numeroOperacion) {
+                    inputOp.value = res.numeroOperacion;
+                    inputOp.classList.add('bg-success-subtle', 'fw-bold');
+                    setTimeout(() => inputOp.classList.remove('bg-success-subtle'), 2000);
+                }
+
+                if (badgeEstado) {
+                    badgeEstado.className = 'badge bg-success';
+                    badgeEstado.innerText = `✓ Leído: S/ ${res.monto ?? '--'} | Op: ${res.numeroOperacion ?? '--'}`;
+                }
+            } else {
+                if (badgeEstado) {
+                    badgeEstado.className = 'badge bg-danger';
+                    badgeEstado.innerText = '⚠ No se distinguió texto claro. Ingrésalo manual.';
+                }
+            }
+        })
+        .catch(err => {
+            console.error("Error en OCR Yape:", err);
+            if (badgeEstado) {
+                badgeEstado.className = 'badge bg-danger';
+                badgeEstado.innerText = 'Error al procesar imagen';
+            }
+        });
+}
