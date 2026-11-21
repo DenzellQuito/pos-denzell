@@ -246,6 +246,9 @@ namespace POS_DENZELL.Migrations
                     b.Property<string>("ClienteNombre")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CodigoHashSunat")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Correlativo")
                         .HasColumnType("int");
 

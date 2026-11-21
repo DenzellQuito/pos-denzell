@@ -168,7 +168,10 @@ namespace POS_DENZELL.Services
                               PagoYape = v.PagoYape,
                               Vuelto = v.Vuelto,
                               NumeroOperacion = v.NumeroOperacion,
-                              RutaFotoComprobante = v.RutaFotoComprobante
+                              RutaFotoComprobante = v.RutaFotoComprobante,
+                              TipoDocumento = v.TipoDocumento,
+                              EstadoSunat = v.EstadoSunat,
+                              MensajeSunat = v.MensajeSunat
                           }).ToListAsync();
         }
     }

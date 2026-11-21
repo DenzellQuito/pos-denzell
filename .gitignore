@@ -491,3 +491,7 @@ $RECYCLE.BIN/
 
 # Respaldos de base de datos
 *.bak
+
+# Archivos XML de pruebas SUNAT
+**/wwwroot/sunat_xml/*
+!**/wwwroot/sunat_xml/.gitkeep

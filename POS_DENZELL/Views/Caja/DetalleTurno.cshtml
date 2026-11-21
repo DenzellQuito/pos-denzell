@@ -19,7 +19,7 @@
 @if (resumen != null)
 {
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
+        <div class="col-md-3">1
             <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
                 <div class="card-body">
                     <small class="text-muted fw-bold">FONDO INICIAL</small>
@@ -61,6 +61,7 @@
                 <thead class="table-light">
                     <tr>
                         <th class="ps-4">COMPROBANTE</th>
+                        <th class="ps-4">Estado</th>
                         <th>HORA</th>
                         <th>CAJERO</th>
                         <th class="text-end">EFECTIVO</th>
@@ -86,7 +87,24 @@
                         {
                             <tr>
                                 <td class="ps-4 fw-bold text-dark">
-                                    <span class="badge bg-dark me-1">TK</span> @v.NumeroComprobante
+                                    @if (v.TipoDocumento == "01" || v.Serie.StartsWith("F"))
+                                    {
+                                        <span class="badge bg-primary me-1">FAC</span>
+                                    }
+                                    else if (v.TipoDocumento == "03" || v.Serie.StartsWith("B"))
+                                    {
+                                        <span class="badge bg-success me-1">BOL</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-dark me-1">TK</span>
+                                    }
+                                    @v.NumeroComprobante
+                                </td>
+                                <td class="ps-4 fw-bold text-dark">
+                                    <span class="badge @(v.EstadoSunat.Contains("Aceptado") ? "bg-success" : "bg-secondary")" title="@v.MensajeSunat">
+                                        @v.EstadoSunat
+                                    </span>
                                 </td>
                                 <td class="text-muted small">@v.FechaHora.ToString("dd/MM/yyyy hh:mm tt")</td>
                                 <td>@v.NombreCajero</td>

@@ -41,7 +41,23 @@
         <div class="divider"></div>
 
         <div style="margin-bottom: 10px;">
-            <div><span class="bold">TICKET DE VENTA:</span> @Model.NumeroComprobante</div>
+            <div style="text-align: center; margin: 6px 0;">
+                <div class="bold">
+                    @if (Model.TipoDocumento == "01")
+                    {
+                        <span>FACTURA ELECTRÓNICA</span>
+                    }
+                    else if (Model.TipoDocumento == "03")
+                    {
+                        <span>BOLETA DE VENTA ELECTRÓNICA</span>
+                    }
+                    else
+                    {
+                        <span>NOTA DE VENTA</span>
+                    }
+                </div>
+                <div class="bold">@Model.NumeroComprobante</div>
+            </div>
             <div><span class="bold">FECHA:</span> @Model.FechaHora.ToString("dd/MM/yyyy HH:mm")</div>
             <div><span class="bold">CAJERO:</span> @Model.NombreCajero</div>
             
@@ -128,18 +144,51 @@
 
         <div class="divider"></div>
 
+        <div class="bold" style="font-size: 11px; margin-bottom: 6px;">
+            @Model.MontoEnLetras
+        </div>
+
+        <div class="divider"></div>
+
         <div class="text-center">
             <p style="margin: 5px 0;" class="bold">¡Gracias por tu compra!</p>
-            <!-- Esto servirá después cuando integres SUNAT -->
-            <p style="font-size: 10px; margin: 0;">Ticket de control interno. No válido como comprobante de pago.</p>
+
+            @if (Model.TipoDocumento != "TK")
+            {
+                <div id="qrcode" style="display: inline-block; margin: 6px auto;"></div>
+                <div style="font-size: 9px; word-break: break-all; margin-top: 4px;">
+                    Hash: @Model.CodigoHashSunat
+                </div>
+            }
+            else
+            {
+                <p style="font-size: 10px; margin: 0;">Ticket de control interno. No válido como comprobante de pago.</p>
+            }
         </div>
 
     </div>
 
-    <script>
-        window.onload = function() {
-            window.print();
-        }
-    </script>
+    @if (Model.TipoDocumento != "TK")
+    {
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <script>
+                window.onload = function () {
+                    new QRCode(document.getElementById("qrcode"), {
+                        text: "@Html.Raw(Model.CadenaQr)",
+                        width: 100,
+                        height: 100
+                    });
+                    setTimeout(function () { window.print(); }, 300);
+                };
+        </script>
+    }
+    else
+    {
+        <script>
+                window.onload = function () {
+                    window.print();
+                };
+        </script>
+    }
 </body>
 </html>

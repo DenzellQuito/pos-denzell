@@ -31,6 +31,7 @@
     public class VentaTurnoDTO
     {
         public int IdVenta { get; set; }
+        public string TipoDocumento { get; set; } = "TK";
         public string Serie { get; set; } = string.Empty;
         public int Correlativo { get; set; }
         public DateTime FechaHora { get; set; }
@@ -41,9 +42,11 @@
         public decimal Vuelto { get; set; }
         public string? NumeroOperacion { get; set; }
         public string? RutaFotoComprobante { get; set; }
+        public string EstadoSunat { get; set; } = "Local";
+        public string? MensajeSunat { get; set; }
 
         public string NumeroComprobante => Correlativo > 0
-            ? $"{Serie}-{Correlativo:D6}"
-            : $"T001-{IdVenta:D6}";
+            ? $"{Serie}-{Correlativo:D8}"
+            : $"T001-{IdVenta:D8}";
     }
 }

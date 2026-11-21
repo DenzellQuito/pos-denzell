@@ -57,5 +57,7 @@ namespace POS_DENZELL.Models
         public decimal TotalIGV { get; set; } 
 
         public string? MensajeSunat { get; set; } // Para guardar errores 
+
+        public string? CodigoHashSunat { get; set; } // Ej: "x8A9b2...=" (Resumen criptográfico del XML)
     }
 }

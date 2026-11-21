@@ -261,7 +261,7 @@ function abrirModalCobro() {
 
     // Reiniciamos el cliente a "Público General" al abrir el modal
     limpiarClienteSeleccionado();
-
+    seleccionarTipoComprobante('TK');
     calcularVuelto();
 
     if (!modalBootstrapCobro) {
@@ -313,7 +313,7 @@ function procesarVentaEnServidor() {
     formData.append('Yape', document.getElementById('inputYape').value || 0);
     formData.append('CarritoJson', JSON.stringify(carrito));
     formData.append('NumeroOperacion', document.getElementById('inputNumeroOperacion').value);
-
+    formData.append('TipoComprobante', document.getElementById('tipoComprobanteSeleccionado')?.value || 'TK');
     // Si hay un cliente seleccionado, enviamos su IdCliente
     const idCliente = document.getElementById('idClienteSeleccionado').value;
     if (idCliente) {
@@ -425,6 +425,9 @@ function seleccionarClientePos(idCliente, documento, nombre) {
     document.getElementById('listaResultadosCliente').classList.add('d-none');
     document.getElementById('panelNuevoClienteRapido').classList.add('d-none');
     document.getElementById('btnQuitarCliente').classList.remove('d-none');
+    if (documento.startsWith('RUC:')) {
+        seleccionarTipoComprobante('01');
+    }
 }
 
 function limpiarClienteSeleccionado() {
@@ -703,4 +706,30 @@ function analizarFotoYapeConOcr(inputElement) {
                 badgeEstado.innerText = 'Error al procesar imagen';
             }
         });
+}
+
+function seleccionarTipoComprobante(tipo) {
+    document.getElementById('tipoComprobanteSeleccionado').value = tipo;
+
+    ['TK', '03', '01'].forEach(cod => {
+        const btn = document.getElementById('btnComp' + cod);
+        if (btn) {
+            btn.className = (cod === tipo)
+                ? 'btn btn-dark fw-bold btn-tipo-comp'
+                : 'btn btn-outline-dark fw-bold btn-tipo-comp';
+        }
+    });
+
+    const aviso = document.getElementById('avisoRequisitoSunat');
+    if (!aviso) return;
+
+    if (tipo === '01') {
+        aviso.innerText = '⚠ Factura Electrónica: Requiere seleccionar un cliente con RUC (11 dígitos).';
+        aviso.classList.remove('d-none');
+    } else if (tipo === '03' && totalActualVenta > 700) {
+        aviso.innerText = '⚠ Boleta mayor a S/ 700.00: SUNAT exige identificar al cliente con DNI.';
+        aviso.classList.remove('d-none');
+    } else {
+        aviso.classList.add('d-none');
+    }
 }
