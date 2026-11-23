@@ -33,9 +33,18 @@
     <div class="ticket-container">
         
         <div class="text-center">
-            <h2 style="margin: 0;">GOLOSINAS JAVIER & JOSE</h2>
-            <p style="margin: 5px 0;">Venta al por menor de dulces y abarrotes</p>
-            <p style="margin: 0;">Barranca, Lima - Perú</p>
+            @if (Model.TipoDocumento == "TK")
+            {
+                <h2 style="margin: 0;">GOLOSINAS J & J</h2>
+                <p style="margin: 5px 0;">Venta al por menor y mayor de Golosinas y Bebidas</p>
+                <p style="margin: 0;">Mercado Modelo - Barranca</p>
+            }
+            else
+            {
+                <h2 style="margin: 0;">GOLOSINAS JAVIER & JOSE</h2>
+                <p style="margin: 5px 0;">Venta al por menor y mayor de Golosinas y Bebidas</p>
+                <p style="margin: 0;">Mercado Modelo (PUESTO 63-64-65-66) - Barranca</p>
+            }
         </div>
 
         <div class="divider"></div>
@@ -59,7 +68,15 @@
                 <div class="bold">@Model.NumeroComprobante</div>
             </div>
             <div><span class="bold">FECHA:</span> @Model.FechaHora.ToString("dd/MM/yyyy HH:mm")</div>
-            <div><span class="bold">CAJERO:</span> @Model.NombreCajero</div>
+            @if (Model.TipoDocumento == "TK")
+            {
+                <div><span class="bold">CAJERO:</span> Admin</div>
+            }
+            else
+            {
+                <div><span class="bold">CAJERO:</span> @Model.NombreCajero</div>
+            }
+            
             
             <!-- DATOS DEL CLIENTE EN EL TICKET -->
             <div style="margin-top: 5px;">
@@ -162,7 +179,7 @@
             }
             else
             {
-                <p style="font-size: 10px; margin: 0;">Ticket de control interno. No válido como comprobante de pago.</p>
+                <p style="font-size: 10px; margin: 0;">Ticket de control interno. No válido como comprobante de pago. Reclame su Boleta.</p>
             }
         </div>
 
