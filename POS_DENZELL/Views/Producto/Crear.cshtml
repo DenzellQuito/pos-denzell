@@ -11,7 +11,6 @@
             </div>
 
             <div class="card-body p-4">
-                <div class="card-body p-4">
                 
                 <!-- ESTO MOSTRARÁ LOS ERRORES DEL SERVIDOR (Como el de la imagen) -->
                 <div asp-validation-summary="All" class="text-danger fw-bold mb-3"></div>
@@ -29,16 +28,7 @@
                                     <label class="form-label fw-bold">Código de Barras *</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light"><i class="bi bi-upc"></i></span>
-                                        <input type="text" name="CodigoBarras" id="inputCodigoBarrasCrear" class="form-control" placeholder="Escanea o escribe el código..." required maxlength="50" autocomplete="off" />
-                                        <button type="button" class="btn btn-dark fw-bold" id="btnCamaraCrearProd" onclick="toggleScannerInventario('inputCodigoBarrasCrear', 'contenedorScannerCrear', 'readerInventarioCrear', 'btnCamaraCrearProd')">
-                                            <i class="bi bi-camera-fill me-1"></i> Escanear
-                                        </button>
-                                    </div>
-
-                                    <!-- Visor desplegable dentro del modal -->
-                                    <div id="contenedorScannerCrear" class="border rounded mt-2 p-2 bg-black text-center d-none">
-                                        <div id="readerInventarioCrear" style="width: 100%; max-width: 340px; margin: 0 auto;"></div>
-                                        <small class="text-white-50 d-block mt-1">Acerca el código de barras de la envoltura...</small>
+                                        <input type="text" name="CodigoBarras" id="inputCodigoBarrasCrear" class="form-control" placeholder="Escanea o escribe el código..." required maxlength="50" autocomplete="off" />                                    
                                     </div>
                                 </div>
 
@@ -124,6 +114,5 @@
             }
         }
     </script>
-        <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
         <script src="~/js/productos.js" asp-append-version="true"></script>
 }
