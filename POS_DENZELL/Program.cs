@@ -27,7 +27,8 @@ builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<IOcrService, OcrService>();
-builder.Services.AddScoped<IFacturacionSunatService, FacturacionSunatService>();
+builder.Services.Configure<POS_DENZELL.Models.SunatSettings>(builder.Configuration.GetSection("Sunat"));
+builder.Services.AddHttpClient<IFacturacionSunatService, FacturacionSunatService>();
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {

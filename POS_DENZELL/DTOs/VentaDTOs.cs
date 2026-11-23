@@ -37,7 +37,7 @@
                         : (ClienteDocumento.Trim().Length == 11 ? "6" : "1");
                     string numDocCli = string.IsNullOrWhiteSpace(ClienteDocumento) ? "00000000" : ClienteDocumento.Trim();
 
-                    return $"RUC_EMISOR|{TipoDocumento}|{Serie}|{Correlativo:D8}|{TotalIGV:0.00}|{MontoTotal:0.00}|{FechaHora:yyyy-MM-dd}|{tipoDocCli}|{numDocCli}|{CodigoHashSunat}";
+                    return $"10608523001|{TipoDocumento}|{Serie}|{Correlativo:D8}|{TotalIGV:0.00}|{MontoTotal:0.00}|{FechaHora:yyyy-MM-dd}|{tipoDocCli}|{numDocCli}|{CodigoHashSunat}";
                 }
             }
             public string MontoEnLetras => POS_DENZELL.Helpers.NumeroALetras.ConvertirSoles(MontoTotal);

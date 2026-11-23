@@ -144,7 +144,7 @@ namespace POS_DENZELL.Services
                 _context.Ventas.Add(nuevaVenta);
                 await _context.SaveChangesAsync();
 
-                var itemsParaXml = new List<(VentaDetalle Detalle, string DescripcionProducto)>();
+                var itemsParaXml = new List<(VentaDetalle Detalle, string DescripcionProducto, string? CodigoBarras)>();
 
                 foreach (var item in carrito)
                 {
@@ -162,7 +162,7 @@ namespace POS_DENZELL.Services
                     if (producto != null)
                     {
                         producto.Stock -= item.cantidad;
-                        itemsParaXml.Add((detalle, producto.Descripcion));
+                        itemsParaXml.Add((detalle, producto.Descripcion, producto.CodigoBarras));
                     }
                 }
 
