@@ -17,7 +17,7 @@ namespace POS_DENZELL.Models
         public string Descripcion { get; set; } = string.Empty;
 
         [Required]
-        [Column(TypeName = "decimal(10,3)")]
+        [Column(TypeName = "decimal(10,6)")]
         public decimal Precio { get; set; }
 
         public int Stock { get; set; } = 0;

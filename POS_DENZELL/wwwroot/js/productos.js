@@ -56,3 +56,37 @@ document.addEventListener("DOMContentLoaded", function () {
         setTimeout(filtrarTabla, 50);
     });
 });
+
+// ==========================================================
+// MINICALCULADORA DE PRECIO UNITARIO (TIRAS / CAJAS A 6 DEC.)
+// ==========================================================
+function calcularPrecioDesdePaquete() {
+    const precioPaquete = parseFloat(document.getElementById('calcPrecioPaquete')?.value);
+    const unidades = parseInt(document.getElementById('calcUnidadesPaquete')?.value, 10);
+    const inputPrecio = document.getElementById('inputPrecio');
+    const lblResultado = document.getElementById('lblResultadoPaquete');
+
+    if (!inputPrecio || !lblResultado) return;
+
+    if (!precioPaquete || precioPaquete <= 0 || !unidades || unidades <= 0) {
+        lblResultado.innerText = '';
+        return;
+    }
+
+    const unitario = precioPaquete / unidades;
+
+    // Deja hasta 6 decimales y limpia ceros sobrantes manteniendo al menos 2 (ej: 0.833333 o 1.50)
+    let textoPrecio = unitario.toFixed(6)
+        .replace(/(\.\d*?[1-9])0+$/, '$1')
+        .replace(/\.0+$/, '.00');
+
+    if (textoPrecio.includes('.') && textoPrecio.split('.')[1].length === 1) {
+        textoPrecio += '0';
+    }
+
+    inputPrecio.value = textoPrecio;
+    inputPrecio.classList.add('bg-success-subtle', 'fw-bold');
+    setTimeout(() => inputPrecio.classList.remove('bg-success-subtle', 'fw-bold'), 800);
+
+    lblResultado.innerText = `✓ S/ ${textoPrecio} c/u (${unidades} unid = S/ ${precioPaquete.toFixed(2)})`;
+}

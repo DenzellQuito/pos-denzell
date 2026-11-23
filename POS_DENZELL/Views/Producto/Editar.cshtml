@@ -13,7 +13,6 @@
             </div>
 
             <div class="card-body p-4">
-                <div class="card-body p-4">
                 
                 <!-- ESTO MOSTRARÁ LOS ERRORES DEL SERVIDOR (Como el de la imagen) -->
                 <div asp-validation-summary="All" class="text-danger fw-bold mb-3"></div>
@@ -43,37 +42,61 @@
                                 <input type="text" asp-for="Descripcion" class="form-control" required>
                             </div>
 
-                                <div class="row">
-                                    <div class="col-12 col-sm-6 mb-3">
-                                        <label class="form-label fw-bold text-secondary">Categoría</label>
-                                        <select asp-for="IdCategoria" class="form-select" required>
-                                            <option value="">-- Seleccionar --</option>
-                                            @foreach (var cat in ViewBag.Categorias)
-                                            {
-                                                <option value="@cat.IdCategoria">@cat.Nombre</option>
-                                            }
-                                        </select>
-                                    </div>
+                            <div class="row">
+                                <div class="col-12 col-sm-6 mb-3">
+                                    <label class="form-label fw-bold text-secondary">Categoría</label>
+                                    <select asp-for="IdCategoria" class="form-select" required>
+                                        <option value="">-- Seleccionar --</option>
+                                        @foreach (var cat in ViewBag.Categorias)
+                                        {
+                                            <option value="@cat.IdCategoria">@cat.Nombre</option>
+                                        }
+                                    </select>
+                                </div>
 
-                                    <div class="col-12 mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" asp-for="EsFiesta" id="chkEsFiesta" role="switch">
-                                            <label class="form-check-label" for="chkEsFiesta">
-                                                Mostrar también en la categoría "Fiesta"
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-6 col-sm-4 mb-3">
-                                        <label class="form-label fw-bold text-secondary text-nowrap">Precio (S/)</label>
-                                        <input type="number" asp-for="Precio" step="0.001" min="0" class="form-control" required>
-                                    </div>
-
-                                    <div class="col-6 col-sm-4 mb-3">
-                                        <label class="form-label fw-bold text-secondary text-nowrap">Stock Actual</label>
-                                        <input type="number" asp-for="Stock" min="0" class="form-control" required>
+                                <div class="col-12 mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" asp-for="EsFiesta" id="chkEsFiesta" role="switch">
+                                        <label class="form-check-label" for="chkEsFiesta">
+                                            Mostrar también en la categoría "Fiesta"
+                                        </label>
                                     </div>
                                 </div>
+
+                                <div class="col-6 col-sm-4 mb-3">
+                                    <label class="form-label fw-bold text-secondary text-nowrap">Precio (S/)</label>
+                                    <input type="number" asp-for="Precio" id="inputPrecio" step="any" min="0"
+                                           value="@Model.Precio.ToString("0.00####", System.Globalization.CultureInfo.InvariantCulture)"
+                                           class="form-control" required>
+                                </div>
+
+                                <div class="col-6 col-sm-4 mb-3">
+                                    <label class="form-label fw-bold text-secondary text-nowrap">Stock Actual</label>
+                                    <input type="number" asp-for="Stock" min="0" class="form-control" required>
+                                </div>
+
+                                <!-- Minicalculadora opcional para tiras / cajas -->
+                                <div class="col-12 mb-3">
+                                    <a class="small text-decoration-none fw-bold" data-bs-toggle="collapse" href="#calcPaquete" role="button">
+                                        <i class="bi bi-calculator"></i> Recalcular Precio Unitario
+                                    </a>
+                                    <div class="collapse mt-2" id="calcPaquete">
+                                        <div class="p-2 border rounded bg-light">
+                                            <div class="row g-2 align-items-end">
+                                                <div class="col-6">
+                                                    <label class="form-label small text-dark fw-semibold mb-1">Precio tira/caja (S/)</label>
+                                                    <input type="number" id="calcPrecioPaquete" step="0.01" min="0" class="form-control form-control-sm" placeholder="Ej: 10.00" oninput="calcularPrecioDesdePaquete()">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small text-dark fw-semibold mb-1">Unidades que trae</label>
+                                                    <input type="number" id="calcUnidadesPaquete" step="1" min="1" class="form-control form-control-sm" placeholder="Ej: 12" oninput="calcularPrecioDesdePaquete()">
+                                                </div>
+                                            </div>
+                                            <small id="lblResultadoPaquete" class="text-success fw-bold d-block mt-1"></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Columna Derecha: Fotografía -->
@@ -116,4 +139,5 @@
             }
         }
     </script>
+    <script src="~/js/productos.js" asp-append-version="true"></script>
 }

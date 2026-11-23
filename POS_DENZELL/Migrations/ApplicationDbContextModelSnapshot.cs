@@ -145,7 +145,7 @@ namespace POS_DENZELL.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("Precio")
-                        .HasColumnType("decimal(10,3)");
+                        .HasColumnType("decimal(10,6)");
 
                     b.Property<string>("RutaImagen")
                         .HasColumnType("nvarchar(max)");
