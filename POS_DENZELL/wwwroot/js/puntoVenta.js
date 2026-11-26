@@ -70,22 +70,13 @@ function ejecutarFiltro() {
 // Este es el arreglo maestro que vivirá en la memoria mientras la pantalla esté abierta
 let carrito = [];
 
-// agregar producto por click
+// agregar producto por click (sin bloquear stock aquí; se valida en el modal si elige Boleta/Factura)
 function agregarAlCarrito(idProducto, descripcion, precio, stock) {
     const productoExistente = carrito.find(p => p.id === idProducto);
 
     if (productoExistente) {
-        // No se puede vender más de lo que hay en inventario
-        if (productoExistente.cantidad >= stock) {
-            alert("No hay más stock disponible de este producto.");
-            return;
-        }
         productoExistente.cantidad++;
     } else {
-        if (stock <= 0) {
-            alert("Producto sin stock.");
-            return;
-        }
         carrito.push({
             id: idProducto,
             descripcion,
@@ -97,6 +88,7 @@ function agregarAlCarrito(idProducto, descripcion, precio, stock) {
 
     actualizarBoletaHTML();
 }
+
 // Función para cambiar cantidades con los botones de + y - en la boleta
 function cambiarCantidad(idProducto, cambio) {
     const index = carrito.findIndex(p => p.id === idProducto);
@@ -104,12 +96,8 @@ function cambiarCantidad(idProducto, cambio) {
     if (index !== -1) {
         const nuevaCantidad = carrito[index].cantidad + cambio;
 
-        // Cantidad 0 o menos: se quita de la boleta
         if (nuevaCantidad <= 0) {
             carrito.splice(index, 1);
-        } else if (nuevaCantidad > carrito[index].stock) {
-            alert("No hay más stock disponible de este producto.");
-            return;
         } else {
             carrito[index].cantidad = nuevaCantidad;
         }
@@ -118,19 +106,15 @@ function cambiarCantidad(idProducto, cambio) {
     }
 }
 
-//escribir cantidad manualmente en la boleta
+// Escribir cantidad manualmente en la boleta
 function escribirCantidad(idProducto, nuevaCantidad) {
     const cantidad = parseInt(nuevaCantidad, 10);
     const index = carrito.findIndex(p => p.id === idProducto);
 
     if (index === -1) return;
 
-    // Vacío, letras, 0 o negativo: se quita de la boleta
     if (isNaN(cantidad) || cantidad <= 0) {
         carrito.splice(index, 1);
-    } else if (cantidad > carrito[index].stock) {
-        alert(`Solo hay ${carrito[index].stock} unidades disponibles.`);
-        carrito[index].cantidad = carrito[index].stock;
     } else {
         carrito[index].cantidad = cantidad;
     }
@@ -275,6 +259,11 @@ function abrirModalCobro() {
     setTimeout(() => { document.getElementById('inputEfectivo').focus(); }, 500);
 }
 
+// Devuelve los productos del carrito cuya cantidad supera el stock registrado
+function obtenerFaltantesStock() {
+    return carrito.filter(item => item.cantidad > item.stock);
+}
+
 function calcularVuelto() {
     let efectivo = parseFloat(document.getElementById('inputEfectivo').value) || 0;
     let yape = parseFloat(document.getElementById('inputYape').value) || 0;
@@ -287,6 +276,9 @@ function calcularVuelto() {
     const modalVuelto = document.getElementById('modalVuelto');
     const btnConfirmar = document.getElementById('btnConfirmarVenta');
 
+    const tipoComp = document.getElementById('tipoComprobanteSeleccionado')?.value || 'TK';
+    const bloqueadoPorStock = (tipoComp === '01' || tipoComp === '03') && obtenerFaltantesStock().length > 0;
+
     if (diferencia < 0) {
         cajaVuelto.className = 'alert alert-secondary d-flex justify-content-between align-items-center mb-0 border-0 shadow-sm';
         lblTexto.innerText = 'Falta:';
@@ -294,12 +286,12 @@ function calcularVuelto() {
         modalVuelto.innerText = `S/ ${Math.abs(diferencia).toFixed(2)}`;
         btnConfirmar.disabled = true;
     } else {
-        // Pago completo
+        // Pago completo (solo habilita si además cumple stock en caso de Boleta/Factura)
         cajaVuelto.className = 'alert alert-success d-flex justify-content-between align-items-center mb-0 border-0 shadow-sm';
         lblTexto.innerText = 'Vuelto (Efectivo):';
         modalVuelto.className = 'fs-3 fw-bold text-success';
         modalVuelto.innerText = `S/ ${diferencia.toFixed(2)}`;
-        btnConfirmar.disabled = false;
+        btnConfirmar.disabled = bloqueadoPorStock;
     }
 }
 
@@ -349,6 +341,10 @@ function procesarVentaEnServidor() {
                 // se abre el ticket en ventana emergente
                 const urlTicket = `/Caja/Ticket/${data.idVenta}`;
                 window.open(urlTicket, 'TicketVenta', 'width=400,height=600,scrollbars=yes');
+                const tipoCompEnviado = document.getElementById('tipoComprobanteSeleccionado')?.value || 'TK';
+                if (tipoCompEnviado !== 'TK') {
+                    setTimeout(() => location.reload(), 300);
+                }
             } else {
                 alert("Error al guardar: " + data.mensaje);
                 btnConfirmar.disabled = false;
@@ -571,15 +567,34 @@ function seleccionarTipoComprobante(tipo) {
     });
 
     const aviso = document.getElementById('avisoRequisitoSunat');
-    if (!aviso) return;
+    if (aviso) {
+        const mensajes = [];
 
-    if (tipo === '01') {
-        aviso.innerText = '⚠ Factura Electrónica: Requiere seleccionar un cliente con RUC (11 dígitos).';
-        aviso.classList.remove('d-none');
-    } else if (tipo === '03' && totalActualVenta > 700) {
-        aviso.innerText = '⚠ Boleta mayor a S/ 700.00: SUNAT exige identificar al cliente con DNI.';
-        aviso.classList.remove('d-none');
-    } else {
-        aviso.classList.add('d-none');
+        if (tipo === '01') {
+            mensajes.push('⚠ Factura Electrónica: Requiere seleccionar un cliente con RUC (11 dígitos).');
+        } else if (tipo === '03' && totalActualVenta > 700) {
+            mensajes.push('⚠ Boleta mayor a S/ 700.00: SUNAT exige identificar al cliente con DNI.');
+        }
+
+        if (tipo === '01' || tipo === '03') {
+            const faltantes = obtenerFaltantesStock();
+            if (faltantes.length > 0) {
+                const detalle = faltantes
+                    .map(f => `${f.descripcion} (disp: ${f.stock})`)
+                    .join(', ');
+                mensajes.push(`🚫 Stock insuficiente para comprobante SUNAT: ${detalle}`);
+            }
+        }
+
+        if (mensajes.length > 0) {
+            aviso.innerHTML = mensajes.join('<br>');
+            aviso.classList.remove('d-none');
+        } else {
+            aviso.innerHTML = '';
+            aviso.classList.add('d-none');
+        }
     }
+
+    // Reevaluamos el estado del botón Confirmar Cobro según pago y stock
+    calcularVuelto();
 }

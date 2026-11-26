@@ -145,9 +145,27 @@ namespace POS_DENZELL.Services
                 await _context.SaveChangesAsync();
 
                 var itemsParaXml = new List<(VentaDetalle Detalle, string DescripcionProducto, string? CodigoBarras)>();
+                bool descuentaStock = (tipoDocNormalizado == "01" || tipoDocNormalizado == "03");
 
                 foreach (var item in carrito)
                 {
+                    var producto = await _context.Productos.FindAsync(item.id);
+                    if (producto == null)
+                    {
+                        throw new Exception($"El producto con ID {item.id} no existe.");
+                    }
+
+                    // Solo validamos y descontamos stock en Boleta ("03") y Factura ("01")
+                    if (descuentaStock)
+                    {
+                        if (producto.Stock < item.cantidad)
+                        {
+                            throw new Exception($"Stock insuficiente para \"{producto.Descripcion}\". Disponible: {producto.Stock}, solicitado: {item.cantidad}.");
+                        }
+
+                        producto.Stock -= item.cantidad;
+                    }
+
                     var detalle = new VentaDetalle
                     {
                         IdVenta = nuevaVenta.IdVenta,
@@ -158,12 +176,7 @@ namespace POS_DENZELL.Services
                     };
                     _context.VentaDetalles.Add(detalle);
 
-                    var producto = await _context.Productos.FindAsync(item.id);
-                    if (producto != null)
-                    {
-                        producto.Stock -= item.cantidad;
-                        itemsParaXml.Add((detalle, producto.Descripcion, producto.CodigoBarras));
-                    }
+                    itemsParaXml.Add((detalle, producto.Descripcion, producto.CodigoBarras));
                 }
 
                 // Emitimos el comprobante al entorno de pruebas SUNAT (si es Boleta "03" o Factura "01")
